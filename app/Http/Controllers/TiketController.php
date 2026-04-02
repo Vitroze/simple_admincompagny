@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Ticket;
 
- class Controller_tiket extends Controller
+ class TicketController extends Controller
 {
     public function all(){
         $tickets=Ticket::all();
