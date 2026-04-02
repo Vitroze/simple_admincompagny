@@ -30,5 +30,12 @@
                 <span>Paramètres</span>
             </a>
         </li>
+
+        <li>
+            <a href="/logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Déconnexion</span>
+            </a>
+        </li>
     </ul>
 </nav>
