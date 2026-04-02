@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\TicketController
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -71,4 +72,4 @@ Route::get('/logout', function () {
 route::get('/ticket',function(){
     return view('ticket');
 });
-route::get('/ticket',[Controller_tiket::class,'all']);
+route::get('/ticket',[TicketController::class,'all']);
