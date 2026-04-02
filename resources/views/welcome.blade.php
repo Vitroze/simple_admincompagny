@@ -14,10 +14,9 @@
             rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
         />
-    <link
-        href="{{ asset('css/app.css') }}"
-        rel="stylesheet"
-    />
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         /* ========== Variables CSS ========== */
@@ -53,5 +52,25 @@
 </head>
 <body>
     @include("navbar")
+
+    <script>
+        @if (session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Succès',
+                text: '{{ session('success') }}',
+            });
+        @endif
+
+        @if (session('error'))
+            Swal.fire({
+                icon: 'error',
+                title: '{{ session('error')['title'] }}',
+                text: '{{ session('error')['message'] }}',
+                confirmButtonColor: '#3c00ff',
+                confirmButtonText: 'Réessayer'
+            });
+        @endif
+    </script>
 </body>
 </html>

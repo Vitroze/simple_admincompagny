@@ -66,3 +66,22 @@ Route::get('/logout', function () {
     Auth::logout();
     return redirect('/login');
 });
+
+Route::get('/manage-users', function () {
+
+    $hasUser = Auth::user();
+    if (!$hasUser) {
+        return redirect('/login')->withErrors(['nologin' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    // TODO: Replace the condition by function isAdmin() in User model
+    if (Auth::user()->usergroup !== 'user') {
+        return redirect('/')->with("error", [
+            "title" => "Accès refusé",
+            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+        ]);
+    }
+
+    $users = User::all();
+    return view('manage_users', ['users' => $users]);
+})->middleware('auth');
