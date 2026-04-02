@@ -75,7 +75,8 @@ Route::get('/manage-users', function () {
     }
 
     // TODO: Replace the condition by function isAdmin() in User model
-    if (Auth::user()->usergroup !== 'user') {
+    $user = Auth::user();
+    if (!$user->hasPermission('manage_users')) {
         return redirect('/')->with("error", [
             "title" => "Accès refusé",
             "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."

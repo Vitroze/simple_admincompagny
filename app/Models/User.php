@@ -29,4 +29,15 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function hasPermission($permissionName): bool
+    {
+        $rank = Rank::where('name', $this->usergroup)->first();
+        if (!$rank) {
+            return false;
+        }
+
+        $permissions = $rank->permissions()->pluck('name_permission')->toArray();
+        return in_array($permissionName, $permissions);
+    }
 }
