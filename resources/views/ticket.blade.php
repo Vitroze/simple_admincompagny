@@ -6,19 +6,22 @@
 </head>
 <body>
     <h1>Voici les ticket</h1>
-
-    <form action="/ticket" class="" method="get">
-        <textarea type="text" id="description" name="description" placeholder="Veiller explique votre demande">
-        <br>
-        <button type="submit" >envoyer</button>
-
-    </form>
-    <div clase="status">
-
-    </div>
+    <section>
+        <div>
+            <button>ajouter un nouveau ticket</button>
+        </div>
 
 
+    </section>
+    <section>
+        <form action="/ticket" class="" method="get">
+            <textarea type="text" id="description" name="description" placeholder="Veiller explique votre demande">
+            <br>
+            <button type="submit" >envoyer</button>
 
+        </form>
+
+    </section>
 
     <button></button>
     <a href="/"></a>
