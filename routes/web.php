@@ -62,6 +62,11 @@ Route::post('/register', function (Request $request) {
     return redirect('/login')->with('success', 'Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter.');
 });
 
+Route::get('/logout', function () {
+    Auth::logout();
+    return redirect('/login');
+});
+
 
 route::get('/ticket',function(){
     return view('ticket');
