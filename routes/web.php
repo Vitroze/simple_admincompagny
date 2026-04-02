@@ -5,7 +5,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
-
+use PHPUnit\Framework\Attributes\Ticket;
 
 Route::get('/', function () {
     $user = Auth::user();
@@ -61,3 +61,9 @@ Route::post('/register', function (Request $request) {
 
     return redirect('/login')->with('success', 'Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter.');
 });
+
+
+route::get('/ticket',function(){
+    return view('ticket');
+});
+route::get('/ticket',[Controller_tiket::class,'all']);
