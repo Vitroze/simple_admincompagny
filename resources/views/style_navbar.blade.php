@@ -2,7 +2,7 @@
     display: flex;
     flex-direction: column;
     width: 250px;
-    height: 100vh;
+    height: 90vh;
     background-color: var(--white);
     padding: 20px;
 }

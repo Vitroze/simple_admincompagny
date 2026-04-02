@@ -7,6 +7,12 @@
             </a>
         </li>
         <li>
+            <a href="/ticket">
+                <i class="fas fa-ticket-alt"></i>
+                <span>Tickets</span>
+            </a>
+        </li>
+        <li>
             <a href="/manage-users">
                 <i class="fas fa-users"></i>
                 <span>Gérer les utilisateurs</span>
