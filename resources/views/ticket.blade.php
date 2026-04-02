@@ -5,11 +5,12 @@
     <title>ticket</title>
 </head>
 <body>
+    <h1>Voici les ticket</h1>
 
-    <form action="" class="" method="get">
-        <input type="text" id="description" name="description" placeholder="Veiller explique votre demande">
+    <form action="/ticket" class="" method="get">
+        <textarea type="text" id="description" name="description" placeholder="Veiller explique votre demande">
         <br>
-        <button>envoyer</button>
+        <button type="submit" >envoyer</button>
 
     </form>
     <div clase="status">
@@ -20,4 +21,5 @@
 
 
     <button></button>
+    <a href="/"></a>
 </body>
