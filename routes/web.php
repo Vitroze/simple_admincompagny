@@ -72,5 +72,5 @@ Route::get('/logout', function () {
 Route::get('/ticket',function(){
     return view('ticket');
 });
-Route::get('/ticket',[TicketController::class,'all']);
+// Route::get('/ticket',[TicketController::class,'all']);
 Route::get('/ticket',[TicketController::class,'add']);
