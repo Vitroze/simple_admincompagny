@@ -17,10 +17,18 @@ Route::get('/', function () {
 });
 
 Route::get('/login', function () {
+    if (Auth::check()) {
+        return redirect('/')->withErrors(['email' => 'Vous êtes déjà connecté']);
+    }
+
     return view('login');
 });
 
 Route::post('/login', function (Request $request) {
+    if (Auth::check()) {
+        return redirect('/')->withErrors(['email' => 'Vous êtes déjà connecté']);
+    }
+
     $request->validate([
         'email' => 'required|email',
         'password' => 'required',
@@ -38,10 +46,18 @@ Route::post('/login', function (Request $request) {
 });
 
 Route::get('/register', function () {
+    if (Auth::check()) {
+        return redirect('/')->withErrors(['email' => 'Vous êtes déjà connecté']);
+    }
+
     return view('register');
 });
 
 Route::post('/register', function (Request $request) {
+    if (Auth::check()) {
+        return redirect('/')->withErrors(['email' => 'Vous êtes déjà connecté']);
+    }
+
     $request->validate([
         'name' => 'required|string|max:255',
         'email' => 'required|email|unique:users,email',
@@ -63,6 +79,11 @@ Route::post('/register', function (Request $request) {
 });
 
 Route::get('/logout', function () {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour vous déconnecter']);
+    }
+
     Auth::logout();
     return redirect('/login');
 });
