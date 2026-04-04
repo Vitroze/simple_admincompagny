@@ -19,7 +19,7 @@
         /* ========== Variables CSS ========== */
         :root {
             --primary-color: #3c00ff;
-            --primary-dark: #2a00b3;
+            --primary-dark: #2a00b3;    
             --primary-light: rgba(60, 0, 255, 0.1);
             --text-dark: #2f2f2f;
             --text-medium: #4f4f4f;
@@ -64,22 +64,31 @@
         <div class="container">
             <section class="ajouter_ticket">
             <h1>ajouter un tickes</h1>
-                <form action="/ticket" class="" method="get">
+                <form action="/ticket" method="get">
 
                         <br>
                         <br>
                         <textarea class="description" id="description" name="description" placeholder="Veiller explique votre demande"></textarea>
                         <br>
                         <br>
-                        <br>
-                        <button type="submit" >envoyer</button>
-
+                        <div class="inscription">
+                            <br>
+                            <input type="date"id="date_tiket"name="date_tiket" placeholder="date du jour">
+                            <br>
+                            <br>
+                            <button type="submit" >envoyer</button>
+                        </div>
                 </form>
 
             </section>
+            /*afficher les ticker stocke dans la base de donné */
              <section classe="voire_ticket"  >
                 <h2> Voir les tickes!!!</h2>
                 <div>
+              
+
+                foreach ($tickes as $ticke)
+                    {{$tickes["description"]}
                     
                 </div>
 
@@ -100,7 +109,18 @@
             align-items: center;
            
         }
-        
+        /* button{
+            display: flex;
+            justify-content: flex-end;
+
+        } */
+        .inscription{
+           
+            padding-left: auto ;     
+        }
+        button{
+            background: linear-gradient(70)
+        }
     
     
     </style>
