@@ -78,7 +78,6 @@ Route::get('/manage-users', function () {
         return redirect('/login')->withErrors(['nologin' => 'Vous devez être connecté pour accéder à cette page']);
     }
 
-    // TODO: Replace the condition by function isAdmin() in User model
     $user = Auth::user();
     if (!$user->hasPermission('manage_users')) {
         return redirect('/')->with("error", [
