@@ -17,6 +17,10 @@ Route::get('/', function () {
 });
 
 Route::get('/login', function () {
+    if (Auth::check()) {
+        return redirect('/')->withErrors(['email' => 'Vous êtes déjà connecté']);
+    }
+
     return view('login');
 });
 
@@ -85,4 +89,12 @@ Route::get('/manage-users', function () {
 
     $users = User::all();
     return view('manage_users', ['users' => $users]);
+})->middleware('auth');
+
+
+Route::delete('/users/{id}', function ($id) {
+    $user = User::findOrFail($id);
+    $user->delete();
+
+    return redirect('/manage-users')->with('success', 'Utilisateur supprimé');
 })->middleware('auth');

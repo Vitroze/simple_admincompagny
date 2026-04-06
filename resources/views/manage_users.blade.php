@@ -160,28 +160,22 @@
                     </thead>
                     <tbody>
                         <!-- Exemple d'utilisateur -->
+                        @foreach ($users as $user)
                         <tr>
-                            <td>-1</td>
-                            <td>john_doe</td>
-                            <td>john.doe@example.com</td>
-                            <td>Admin</td>
+                            <td>{{ $user->id }}</td>
+                            <td>{{ $user->name }}</td>
+                            <td>{{ $user->email }}</td>
+                            <td>{{ $user->usergroup }}</td>
                             <td>
                                 <button class="btn btn-primary">Modifier</button>
-                                <button class="btn btn-danger">Supprimer</button>
+
+                               <form action="/users/{{ $user->id }}" method="POST" style="display:inline;">
+                                   @csrf
+                                  @method('DELETE')
+                                  <button class="btn btn-danger">Supprimer</button>
+                              </form>
                             </td>
                         </tr>
-
-                        @foreach ($users as $user)
-                            <tr>
-                                <td>{{ $user->id }}</td>
-                                <td>{{ $user->name }}</td>
-                                <td>{{ $user->email }}</td>
-                                <td>{{ $user->usergroup }}</td>
-                                <td>
-                                    <button class="btn btn-primary">Modifier</button>
-                                    <button class="btn btn-danger">Supprimer</button>
-                                </td>
-                            </tr>
                         @endforeach
 
                     </tbody>
@@ -189,6 +183,7 @@
             </div>
         </div>
     </div>
+    
 
     <script>
         // Exemple de gestion des actions de modification et suppression
