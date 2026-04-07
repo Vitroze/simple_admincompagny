@@ -92,8 +92,21 @@ Route::get('/manage-users', function () {
 
 
 Route::delete('/users/{id}', function ($id) {
-    $user = User::findOrFail($id);
-    $user->delete();
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['nologin' => 'Vous devez être connecté pour accéder à cette page']);
+    }
 
-    return redirect('/manage-users')->with('success', 'Utilisateur supprimé');
+    if (!$user->hasPermission('manage_users') or !$user->hasPermission('delete_users')) {
+        return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour supprimer des utilisateurs']);
+    }
+
+    $userDelete = User::findOrFail($id);
+    if ($userDelete->id === $user->id) {
+        return redirect('/manage-users')->withErrors(['error' => 'Vous ne pouvez pas supprimer votre propre compte']);
+    }
+
+    $userDelete->delete();
+
+    return back()->with('success', 'Utilisateur supprimé avec succès');
 })->middleware('auth');
