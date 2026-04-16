@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 
+
+
 Route::get('/', function () {
     $user = Auth::user();
     if (!$user) {
@@ -90,10 +92,29 @@ Route::get('/manage-users', function () {
     return view('manage_users', ['users' => $users]);
 })->middleware('auth');
 
-
+//bouton supprimmer
 Route::delete('/users/{id}', function ($id) {
     $user = User::findOrFail($id);
     $user->delete();
 
     return redirect('/manage-users')->with('success', 'Utilisateur supprimé');
 })->middleware('auth');
+
+//bouton modifier
+Route::get('/users/{id}/edit', function ($id) {
+    $users = User::all(); // Charger tous les utilisateurs
+    return view('users', ['users' => $users]);//redirection vers la page manage_user
+});//pour utiliser la pop
+
+
+//modification du role
+Route::put('/users/{id}', function (Request $request, $id) {
+    $user = User::findOrFail($id);
+
+    $user->usergroup = $request->usergroup; // on changement du rôle
+
+    $user->save();
+
+    return redirect('/manage-users')->with('success', 'Rôle modifié');
+});
+

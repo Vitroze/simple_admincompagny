@@ -167,7 +167,10 @@
                             <td>{{ $user->email }}</td>
                             <td>{{ $user->usergroup }}</td>
                             <td>
-                                <button class="btn btn-primary">Modifier</button>
+                                <form action="/users/{{ $user->id }}/edit" method="GET" style="display:inline;">
+                                    <button class="btn btn-primary">Modifier</button>
+                                </form>
+
 
                                <form action="/users/{{ $user->id }}" method="POST" style="display:inline;">
                                    @csrf
@@ -179,6 +182,7 @@
                         @endforeach
 
                     </tbody>
+                    
                 </table>
             </div>
         </div>
