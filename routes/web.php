@@ -71,24 +71,27 @@ Route::get('/logout', function () {
 
 
 Route::get('/ticket', function () {
-    return view('ticket');
+    $tickets=Ticket::all();
+    return view('ticket', compact("tickets"));
 });
 
-Route::get('/ticket',function(Request $request){
+Route::post('/tickets',function(Request $request){     //attention sur la redirection avec le ticket avec le k 
 
     $request->validate([
-            "description"=>"required",
-            "statu"=>"required",
-            "date_tiket"=>"required",
+            "description"=>"required|string",
+            "date_tiket"=>"required", 
         ]);
     
     Ticket::create([
         "description"=>$request->description,
-        "statu"=>$request->statu,
+        "statut"=>"ouvert",
         "date_tiket"=>$request->date_tiket,
+        "user_id"=>3
         ]);
 
-    // return redirect('/ticket')->with('success', 'Votre ticket a été créé avec succès. Vous pouvez maintenant le consulte sur voir mes tickes.');
+
+
+    return redirect('/ticket')->with('success', 'Votre ticket a été créé avec succès. Vous pouvez maintenant le consulte voir mes tickes.');
 });
 
 

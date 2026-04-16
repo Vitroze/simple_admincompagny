@@ -64,8 +64,8 @@
         <div class="container">
             <section class="ajouter_ticket">
             <h1>ajouter un tickes</h1>
-                <form action="/ticket" method="get">
-
+                <form action="/tickets" method="post">
+                        @csrf
                         <br>
                         <br>
                         <textarea class="description" id="description" name="description" placeholder="Veiller explique votre demande"></textarea>
@@ -81,13 +81,30 @@
                 </form>
 
             </section>
-            /*afficher les ticker stocke dans la base de donné */
+            //afficher les ticker stocke dans la base de donné 
              <section classe="voire_ticket"  >
                 <h2> Voir les tickes!!!</h2>
-                <div>
-              
+                <div class="tout_bloc">
+                    @foreach($tickets as $ticket)
+                    <div class="bloc" >
+                        <p class="description">{{$ticket->description}}</p>
+                        <div class="date_statut">
+                        <p >
+                        {{$ticket->statut}}
+                        
+                       </p>
+                        <p >
+                            {{ \Carbon\Carbon::parse($ticket->date_ticket)->format('d/m/Y') }}
+                        
+                        </p>
+                        </div>
+
+                    </div>
+                    @endforeach
             
                 </div>
+
+
 
 
             </section>
@@ -118,8 +135,64 @@
         button{
             background: linear-gradient(70)
         }
-    
+        .bloc{
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 2px 5px 5px rgba(0,0,0,0.1);
+            width: 300px;
+            height: 170px;
+            border-radius: 10%;
+            border: solid #1d1c1c;
+        }
+
+        .description{
+            color:black;
+            font-size: 14px;
+        }
+        .tout_bloc{
+            max-width: 95%;
+            background: red;
+            display: grid;
+            grid-template-columns: repeat(3, 400px);
+            margin-left: 20px;
+        }
+
+        .date_statut{
+            display: flex;
+            color: #1d1c1c;
+            flex-direction:row ;
+            justify-content: space-between;
+
+        }
+        
     
     </style>
+    <script>
+            // SweetAlert for errors
+            @if ($errors->any())
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur d\'inscription',
+                    html: '<ul style="text-align: left; padding-left: 20px;">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>',
+                    confirmButtonColor: '#3c00ff',
+                    confirmButtonText: 'Corriger'
+                });
+            @endif
+
+            // Success message
+            @if (session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Inscription réussie !',
+                    text: '{{ session('success') }}',
+                    confirmButtonColor: '#3c00ff',
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            @endif
+
+    </script>
 </body>
 </html>
