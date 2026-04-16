@@ -27,6 +27,10 @@ Route::get('/login', function () {
 });
 
 Route::post('/login', function (Request $request) {
+    if (Auth::check()) {
+        return redirect('/')->withErrors(['email' => 'Vous êtes déjà connecté']);
+    }
+
     $request->validate([
         'email' => 'required|email',
         'password' => 'required',
@@ -44,10 +48,18 @@ Route::post('/login', function (Request $request) {
 });
 
 Route::get('/register', function () {
+    if (Auth::check()) {
+        return redirect('/')->withErrors(['email' => 'Vous êtes déjà connecté']);
+    }
+
     return view('register');
 });
 
 Route::post('/register', function (Request $request) {
+    if (Auth::check()) {
+        return redirect('/')->withErrors(['email' => 'Vous êtes déjà connecté']);
+    }
+
     $request->validate([
         'name' => 'required|string|max:255',
         'email' => 'required|email|unique:users,email',
@@ -69,6 +81,11 @@ Route::post('/register', function (Request $request) {
 });
 
 Route::get('/logout', function () {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour vous déconnecter']);
+    }
+
     Auth::logout();
     return redirect('/login');
 });
@@ -94,10 +111,23 @@ Route::get('/manage-users', function () {
 
 //bouton supprimmer
 Route::delete('/users/{id}', function ($id) {
-    $user = User::findOrFail($id);
-    $user->delete();
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['nologin' => 'Vous devez être connecté pour accéder à cette page']);
+    }
 
-    return redirect('/manage-users')->with('success', 'Utilisateur supprimé');
+    if (!$user->hasPermission('manage_users') or !$user->hasPermission('delete_users')) {
+        return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour supprimer des utilisateurs']);
+    }
+
+    $userDelete = User::findOrFail($id);
+    if ($userDelete->id === $user->id) {
+        return redirect('/manage-users')->withErrors(['error' => 'Vous ne pouvez pas supprimer votre propre compte']);
+    }
+
+    $userDelete->delete();
+
+    return back()->with('success', 'Utilisateur supprimé avec succès');
 })->middleware('auth');
 
 //bouton modifier

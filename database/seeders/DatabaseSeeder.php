@@ -23,11 +23,23 @@ class DatabaseSeeder extends Seeder
         Rank::create(['name' => 'user']);
 
         Permission::create(['name_permission' => 'manage_users']);
+        Permission::create(['name_permission' => 'delete_users']);
+        Permission::create(['name_permission' => 'edit_users']);
         Permission::create(['name_permission' => 'view_reports']);
         $adminRank = Rank::where('name', 'admin')->first();
         $manageUsersPermission = Permission::where('name_permission', 'manage_users')->first();
+        $deleteUsersPermission = Permission::where('name_permission', 'delete_users')->first();
+        $editUsersPermission = Permission::where('name_permission', 'edit_users')->first();
         $viewReportsPermission = Permission::where('name_permission', 'view_reports')->first();
+
         $adminRank->permissions()->attach([$manageUsersPermission->id, $viewReportsPermission->id]);
+
+        $adminRank->permissions()->attach([
+            $manageUsersPermission->id,
+            $deleteUsersPermission->id,
+            $editUsersPermission->id,
+            $viewReportsPermission->id
+        ]);
 
         User::factory()->create([
             'name' => 'Test Dev',

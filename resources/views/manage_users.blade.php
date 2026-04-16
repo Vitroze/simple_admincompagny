@@ -172,10 +172,10 @@
                                 </form>
 
 
-                               <form action="/users/{{ $user->id }}" method="POST" style="display:inline;">
+                                <button class="btn btn-danger">Supprimer</button>
+                               <form action="/users/{{ $user->id }}" method="POST" style="display:inline;" id="delete-form-{{ $user->id }}">
                                    @csrf
                                   @method('DELETE')
-                                  <button class="btn btn-danger">Supprimer</button>
                               </form>
                             </td>
                         </tr>
@@ -210,8 +210,7 @@
                     cancelButtonText: 'Annuler'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        Swal.fire('Supprimé!', 'L\'utilisateur a été supprimé.', 'success');
-                        // Logique de suppression à implémenter
+                        document.getElementById(`delete-form-${button.parentElement.parentElement.children[0].textContent}`).submit();
                     }
                 });
             });
@@ -229,6 +228,27 @@
                 }
             });
         });
+
+        @if (session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Succès',
+                text: '{{ session('success') }}',
+                confirmButtonColor: '#3c00ff',
+                timer: 3000,
+                timerProgressBar: true
+            });
+        @endif
+
+        @if ($errors->any())
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur de connexion',
+                text: '{{ $errors->first() }}',
+                confirmButtonColor: '#3c00ff',
+                confirmButtonText: 'Réessayer'
+            });
+        @endif
     </script>
 </body>
 </html>

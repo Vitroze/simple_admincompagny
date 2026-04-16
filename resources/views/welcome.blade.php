@@ -54,7 +54,7 @@
     @include("navbar")
 
     <script>
-        @if (session('success'))
+        @if(session('success'))
             Swal.fire({
                 icon: 'success',
                 title: 'Succès',
@@ -62,13 +62,11 @@
             });
         @endif
 
-        @if (session('error'))
+        @if ($errors->any())
             Swal.fire({
                 icon: 'error',
-                title: '{{ session('error')['title'] }}',
-                text: '{{ session('error')['message'] }}',
-                confirmButtonColor: '#3c00ff',
-                confirmButtonText: 'Réessayer'
+                title: 'Erreur',
+                text: '{{ $errors->first() }}',
             });
         @endif
     </script>
