@@ -11,15 +11,19 @@ use App\Models\Ticket;
         return view('/ticket',["ticket"=>$tickets]);
     }
 
-    public function add(Request $request){
+    // public function add(Request $request){
 
-        $request->validate([
-            "description"=>"required"
-        ]);
+    //     $request->validate([
+    //         "description"=>"required",
+    //         "statu"=>"required",
+    //         "date_tiket"=>"required"
+    //     ]);
 
-        Ticket::create([
-        "description"=>$request->description,
-        ]);
-    }
+    //     Ticket::create([
+    //     "description"=>$request->description,
+    //     "statu"=>$request->statu,
+    //     "date_tiket"=>$request->date_tiket,
+    //     ]);      
+    // }
 
 }

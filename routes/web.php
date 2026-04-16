@@ -1,12 +1,13 @@
 <?php
 
-use App\Http\Controllers\TicketController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
-use PHPUnit\Framework\Attributes\Ticket;
+//use PHPUnit\Framework\Attributes\Ticket;
+use App\Models\Ticket;
+
 
 Route::get('/', function () {
     $user = Auth::user();
@@ -72,5 +73,24 @@ Route::get('/logout', function () {
 Route::get('/ticket', function () {
     return view('ticket');
 });
-// Route::get('/ticket',[TicketController::class,'all']);
-Route::get('/ticket-add', [TicketController::class, 'add']);
+
+Route::get('/ticket',function(Request $request){
+
+    $request->validate([
+            "description"=>"required",
+            "statu"=>"required",
+            "date_tiket"=>"required",
+        ]);
+    
+    Ticket::create([
+        "description"=>$request->description,
+        "statu"=>$request->statu,
+        "date_tiket"=>$request->date_tiket,
+        ]);
+
+    // return redirect('/ticket')->with('success', 'Votre ticket a été créé avec succès. Vous pouvez maintenant le consulte sur voir mes tickes.');
+});
+
+
+
+//retire le contoler est le metre dans web.php avec ci qu il y a dans la class tiketContoler et rajouter dans web.php le lien avec le model tike.php

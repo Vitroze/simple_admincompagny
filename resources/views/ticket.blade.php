@@ -86,10 +86,7 @@
                 <h2> Voir les tickes!!!</h2>
                 <div>
               
-
-                foreach ($tickes as $ticke)
-                    {{$tickes["description"]}
-                    
+            
                 </div>
 
 
