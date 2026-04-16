@@ -4,10 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Rank;
 use Illuminate\Support\Facades\Auth;
-
-
-
 
 Route::get('/', function () {
     $user = Auth::user();
@@ -99,7 +97,7 @@ Route::get('/manage-users', function () {
 
     $hasUser = Auth::user();
     if (!$hasUser) {
-        return redirect('/login')->withErrors(['nologin' => 'Vous devez être connecté pour accéder à cette page']);
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
     }
 
     $user = Auth::user();
@@ -111,8 +109,9 @@ Route::get('/manage-users', function () {
     }
 
     $users = User::all();
-    return view('manage_users', ['users' => $users]);
-})->middleware('auth');
+    $ranks = Rank::all();
+    return view('manage_users', compact('users', 'ranks'));
+});
 
 //bouton supprimmer
 Route::delete('/users/{id}', function ($id) {
@@ -133,23 +132,32 @@ Route::delete('/users/{id}', function ($id) {
     $userDelete->delete();
 
     return back()->with('success', 'Utilisateur supprimé avec succès');
-})->middleware('auth');
-
-//bouton modifier
-Route::get('/users/{id}/edit', function ($id) {
-    $users = User::all(); // Charger tous les utilisateurs
-    return view('users', ['users' => $users]);//redirection vers la page manage_user
-});//pour utiliser la pop
-
-
-//modification du role
-Route::put('/users/{id}', function (Request $request, $id) {
-    $user = User::findOrFail($id);
-
-    $user->usergroup = $request->usergroup; // on changement du rôle
-
-    $user->save();
-
-    return redirect('/manage-users')->with('success', 'Rôle modifié');
 });
 
+//modification du role
+Route::post('/users/{id}', function (Request $request, $id) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    if (!$user->hasPermission('manage_users') or !$user->hasPermission('edit_users')) {
+        return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour modifier des utilisateurs']);
+    }
+
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'usergroup' => 'required|string|exists:ranks,name',
+    ]);
+
+    if ($user->id == $id) {
+        return back()->withErrors(['error' => 'Vous ne pouvez pas modifier votre propre compte']);
+    }
+
+    $userEdit = User::findOrFail($id);
+    $userEdit->usergroup = $request->usergroup;
+    $userEdit->name = $request->name;
+    $userEdit->save();
+
+    return back()->with('success', 'Utilisateur modifié avec succès');
+});

@@ -133,6 +133,84 @@
             border-color: var(--primary-dark);
         }
 
+                .popup_inputuser {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .popup-content {
+            background-color: var(--white);
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .popup-content h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .popup-content .form-group {
+            margin-bottom: 15px;
+        }
+
+        .popup-content label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-medium);
+        }
+
+        .popup-content input {
+            width: 95%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        .popup-content input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px var(--primary-light);
+        }
+
+        .popup-content input::placeholder {
+            color: var(--text-light);
+        }
+
+        .popup-content input:hover {
+            border-color: var(--primary-dark);
+        }
+        
+        .popup-content select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        .form-control.green {
+            background-color: #d1fae5;
+            color: #22c55e;
+        }
+
+        .form-control.orange {
+            background-color: #fff7ed;
+            color: #f59e0b;
+        }
+
+        .form-control.red {
+            background-color: #fee2e2;
+            color: #ef4444;
+        }
+
     </style>
 </head>
 <body>
@@ -167,11 +245,7 @@
                             <td>{{ $user->email }}</td>
                             <td>{{ $user->usergroup }}</td>
                             <td>
-                                <form action="/users/{{ $user->id }}/edit" method="GET" style="display:inline;">
-                                    <button class="btn btn-primary">Modifier</button>
-                                </form>
-
-
+                                <button class="btn btn-primary">Modifier</button>
                                 <button class="btn btn-danger">Supprimer</button>
                                <form action="/users/{{ $user->id }}" method="POST" style="display:inline;" id="delete-form-{{ $user->id }}">
                                    @csrf
@@ -188,32 +262,67 @@
         </div>
     </div>
     
+    <div class="popup_inputuser" style="display: none;">
+        <div class="popup-content">
+            <h2>Modifier l'utilisateur</h2>
+            <form action="/users/{{ $user->id }}" method="POST">
+                @csrf
+                <div class="form-group">
+                    <label for="name">Nom de l'utilisateur</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="usergroup">Rôle</label>
+                    <select id="usergroup" name="usergroup" required>
+                        @foreach ($ranks as $rank)
+                            <option value="{{ $rank->name }}" class="form-control">{{ trim($rank->name) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary add-item">Modifier</button>
+                <button type="button" class="btn btn-danger close-popup">Annuler</button>
+            </form>
+        </div>
+    </div>
 
     <script>
         // Exemple de gestion des actions de modification et suppression
+        let popup = document.querySelector('.popup_inputuser');
         document.querySelectorAll('.btn-primary').forEach(button => {
+            if (button.classList.contains('add-item')) return;
+
             button.addEventListener('click', () => {
-                Swal.fire('Modifier', 'Fonction de modification à implémenter', 'info');
+                popup.style.display = 'flex';
+                document.getElementById('name').value = button.parentElement.parentElement.children[1].textContent;
+                document.getElementById('rank_id').value = button.parentElement.parentElement.children[3].textContent.trim();
             });
         });
 
         document.querySelectorAll('.btn-danger').forEach(button => {
-            button.addEventListener('click', () => {
-                Swal.fire({
-                    title: 'Êtes-vous sûr?',
-                    text: "Cette action est irréversible!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#ef4444',
-                    cancelButtonColor: '#6b7280',
-                    confirmButtonText: 'Oui, supprimer!',
-                    cancelButtonText: 'Annuler'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        document.getElementById(`delete-form-${button.parentElement.parentElement.children[0].textContent}`).submit();
-                    }
+            if (button.textContent === 'Supprimer') {
+                button.addEventListener('click', () => {
+                    Swal.fire({
+                        title: 'Êtes-vous sûr?',
+                        text: "Cette action est irréversible!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ef4444',
+                        cancelButtonColor: '#6b7280',
+                        confirmButtonText: 'Oui, supprimer!',
+                        cancelButtonText: 'Annuler'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            document.getElementById(`delete-form-${button.parentElement.parentElement.children[0].textContent}`).submit();
+                        }
+                    });
                 });
-            });
+            } else {
+                button.addEventListener('click', () => {
+                    popup.style.display = 'none';
+                });
+            }
         });
 
         document.querySelector('.search-user input').addEventListener('input', function() {
