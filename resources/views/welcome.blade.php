@@ -114,16 +114,17 @@
                 <div class="information">
                     <div class="bloc">
                         <h3>Dernnier utilisateur</h3>
-                        <p>PEY</p>
+                        <p>{{ $lastUser->name }} ({{ $lastUser->created_at->format('d/m/Y') }})</p>
                     </div>
                     <div class="bloc">
                         <h3>Activité</h3>
-                        <p>Travaux rendu : 5</p>
-                        <p>3 entreprise relier</p>
+                        <p>Ticket traité : 5</p>
+                        <p>Ticket à traité : 3</p>
+                        <p>Nombre d'utilisateurs : {{ $users }}</p>
                     </div>
                     <div class="bloc">
                         <h3>Actualité</h3>
-                        <p>Aujourd'hui plus de 50% des entreprise utilise: simple_admincorporation</p>
+                        <p>Il n'y a aucune actualité à afficher.</p>
                     </div>
                 </div>
             </section>
@@ -141,13 +142,6 @@
                 <div>
             </section>
 
-        <details>
-        <summary>
-            voici Le menu vertical a enlever
-        </summary>
-        Un clavier.
-        <a href="page2.php">Page 2
-        </details>
         </div>
     </div>
 </body>

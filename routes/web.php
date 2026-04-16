@@ -13,7 +13,12 @@ Route::get('/', function () {
         return redirect('/login');
     }
 
-    return view('welcome');
+    $users = User::all()->count();
+    $lastUser = User::latest()->first();
+    // TODO: Récupérer les données d'activité depuis le paramètre
+    // TODO: Récupérer le nombre de ticket à traiter et traité depuis tickets
+
+    return view('welcome', compact('users', 'lastUser'));
 });
 
 Route::get('/login', function () {
