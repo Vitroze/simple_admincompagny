@@ -4,8 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Inventory;
 use Illuminate\Support\Facades\Auth;
-
 
 Route::get('/', function () {
     $user = Auth::user();
@@ -86,4 +86,89 @@ Route::get('/logout', function () {
 
     Auth::logout();
     return redirect('/login');
+});
+
+// TODO: Add HasPermissions
+$CONFIG_STATUS_ITEMS = [
+    "En stock",
+    "Bientôt épuisé",
+    "Rupture de stock"
+];
+
+Route::get("/storage", function () use ($CONFIG_STATUS_ITEMS) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    $inventoryItems = Inventory::all();
+    return view("storage", compact("inventoryItems", "CONFIG_STATUS_ITEMS"));
+});
+
+Route::post("/inventory-add", function (Request $request) use ($CONFIG_STATUS_ITEMS) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour ajouter un item']);
+    }
+
+    $request->validate([
+        'product_name' => 'required|string|max:255',
+        'quantity' => 'required|integer|min:0',
+    ]);
+
+    if (!in_array($request->status, $CONFIG_STATUS_ITEMS)) {
+        return back()->withErrors(['status' => 'Status invalide']);
+    }
+
+    Inventory::create([
+        'product_name' => $request->product_name,
+        'quantity' => $request->quantity,
+        'status' => $request->status,
+    ]);
+
+    return back()->with('success', 'Item ajouté avec succès');
+});
+
+Route::delete("/inventory/{id}", function ($id) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour supprimer un item']);
+    }
+
+    $item = Inventory::find($id);
+    if (!$item) {
+        return back()->withErrors(['error' => 'Item non trouvé']);
+    }
+
+    $item->delete();
+    return back()->with('success', 'Item supprimé avec succès');
+});
+
+Route::post("/inventory/{id}", function (Request $request, $id) use ($CONFIG_STATUS_ITEMS) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour modifier un item']);
+    }
+
+    $item = Inventory::find($id);
+    if (!$item) {
+        return back()->withErrors(['error' => 'Item non trouvé']);
+    }
+
+    $request->validate([
+        'product_name' => 'required|string|max:255',
+        'quantity' => 'required|integer|min:0',
+    ]);
+
+    if (!in_array($request->status, $CONFIG_STATUS_ITEMS)) {
+        return back()->withErrors(['status' => 'Status invalide']);
+    }
+
+    $item->update([
+        'product_name' => $request->product_name,
+        'quantity' => $request->quantity,
+        'status' => $request->status,
+    ]);
+
+    return back()->with('success', 'Item modifié avec succès');
 });
