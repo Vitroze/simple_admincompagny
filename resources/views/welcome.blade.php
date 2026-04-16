@@ -14,9 +14,16 @@
             rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
         />
+<<<<<<< HEAD
     
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+=======
+
+        <!-- SweetAlert2 -->
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+>>>>>>> main
 
     <style>
         /* ========== Variables CSS ========== */
@@ -47,26 +54,125 @@
         /* ========== Navbar ========== */
         @include("style_navbar")
 
+        .container-navbar {
+            display: flex;
+        }
 
+        .container {
+            flex: 1;
+            padding: 20px;
+        }
+
+        body {background-color: rgb(234, 236, 245);}
+
+.barre_tache {
+  display: flex;
+  justify-content: center;
+  background: rgba(126, 88, 180, 0.8);
+  padding: 15px 0;
+}
+.link {
+  margin: 0 20px;
+  text-decoration: none;
+  font-size: 1.1rem;
+}
+.carte {
+  background: rgba(255, 255, 255, 0.9);
+  margin: 40px 50px;
+  padding: 20px;
+  border-radius: 8px;
+}
+.information {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+.bloc {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.interieur{
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    background-color: rgb(246, 242, 242);
+    text-align: center;
+    justify-content:start;
+    align-items: start;
+}
     </style>
 </head>
 <body>
-    @include("navbar")
+
+    <div class="container-navbar">
+        @include("navbar")
+
+        <div class="container">
+            <h1>Accueil</h1>
+            <section class="carte">
+                <h2>Présentation de la journée</h2>
+
+                <div class="information">
+                    <div class="bloc">
+                        <h3>Dernnier utilisateur</h3>
+                        <p>{{ $lastUser->name }} ({{ $lastUser->created_at->format('d/m/Y') }})</p>
+                    </div>
+                    <div class="bloc">
+                        <h3>Activité</h3>
+                        <p>Ticket traité : 5</p>
+                        <p>Ticket à traité : 3</p>
+                        <p>Nombre d'utilisateurs : {{ $users }}</p>
+                    </div>
+                    <div class="bloc">
+                        <h3>Actualité</h3>
+                        <p>Il n'y a aucune actualité à afficher.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="carte">
+                <h2>Évènements</h2>
+                <div class="interieur">
+                    <p>Aucun évènement à afficher</p>
+                <div>
+            </section>
+            <section class="carte">
+                <h2>  Dernier changement effectuer</h2>
+                <div class="interieur">
+                    <p>Aucun changement à afficher</p>
+                <div>
+            </section>
+
+        </div>
+    </div>
 
     <script>
-        @if(session('success'))
+        
+        // SweetAlert for errors
+        @if ($errors->any())
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur de validation',
+                html: '<ul style="text-align: left; padding-left: 20px;">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>',
+                confirmButtonColor: '#3c00ff',
+                confirmButtonText: 'OK'
+            });
+        @endif
+
+        // Success message
+        @if (session('success'))
             Swal.fire({
                 icon: 'success',
                 title: 'Succès',
                 text: '{{ session('success') }}',
-            });
-        @endif
-
-        @if ($errors->any())
-            Swal.fire({
-                icon: 'error',
-                title: 'Erreur',
-                text: '{{ $errors->first() }}',
+                confirmButtonColor: '#3c00ff',
+                timer: 3000,
+                timerProgressBar: true
             });
         @endif
     </script>

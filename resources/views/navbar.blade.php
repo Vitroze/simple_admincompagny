@@ -1,4 +1,11 @@
 <nav>
+    <ul class="users">
+            <a href="/profile">
+                <i class="fas fa-user"></i>
+                <span>{{ Auth::user()->name }}</span>
+            </a>
+    </ul>
+
     <ul class="navbar">
         <li>
             <a href="/">
