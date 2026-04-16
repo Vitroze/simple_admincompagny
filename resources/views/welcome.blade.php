@@ -14,10 +14,10 @@
             rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
         />
-    <link
-        href="{{ asset('css/app.css') }}"
-        rel="stylesheet"
-    />
+
+        <!-- SweetAlert2 -->
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
     <style>
         /* ========== Variables CSS ========== */
@@ -144,5 +144,31 @@
 
         </div>
     </div>
+
+    <script>
+        
+        // SweetAlert for errors
+        @if ($errors->any())
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur de validation',
+                html: '<ul style="text-align: left; padding-left: 20px;">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>',
+                confirmButtonColor: '#3c00ff',
+                confirmButtonText: 'OK'
+            });
+        @endif
+
+        // Success message
+        @if (session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Succès',
+                text: '{{ session('success') }}',
+                confirmButtonColor: '#3c00ff',
+                timer: 3000,
+                timerProgressBar: true
+            });
+        @endif
+    </script>
 </body>
 </html>
