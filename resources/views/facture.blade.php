@@ -245,7 +245,9 @@
 
             <div class="search-user">
                 <input type="text" placeholder="Rechercher une facture..." />
-                <button class="btn btn-primary add-popup">Ajouter une facture</button>    
+                @if ($user->hasPermission('create_facture'))
+                    <button class="btn btn-primary add-popup">Ajouter une facture</button>    
+                @endif
             </div>
 
             <div class="user-management">

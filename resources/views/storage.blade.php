@@ -222,7 +222,9 @@
 
             <div class="search-user">
                 <input type="text" placeholder="Rechercher un item..." />
-                <button class="btn btn-primary add-popup">Ajouter un item</button>    
+                @if ($user->hasPermission('create_storage'))
+                    <button class="btn btn-primary add-popup">Ajouter un item</button>    
+                @endif
             </div>
 
             <div class="user-management">
