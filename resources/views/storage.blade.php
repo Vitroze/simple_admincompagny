@@ -234,7 +234,9 @@
                             <th>Quantité</th>
                             <th>Status</th>
                             <th>Dernière modification</th>
-                            <th>Actions</th>
+                            @if ($user->hasPermission('edit_storage') or $user->hasPermission('delete_storage'))
+                                <th>Actions</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -246,14 +248,20 @@
                                 <td>{{ $item->quantity }}</td>
                                 <td>{{ $item->status }}</td>
                                 <td>{{ $item->updated_at->format('d/m/Y H:i') }}</td>
-                                <td>
-                                    <button class="btn btn-primary modify-items" id="edit-btn-{{ $item->id }}">Modifier</button>
-                                    <form id="delete-form-{{ $item->id }}" action="/inventory/{{ $item->id }}" method="POST" style="display: inline;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="button" class="btn btn-danger">Supprimer</button>
-                                    </form>
-                                </td>
+                                @if ($user->hasPermission('edit_storage') or $user->hasPermission('delete_storage'))
+                                    <td>
+                                        @if ($user->hasPermission('edit_storage'))
+                                            <button class="btn btn-primary modify-items" id="edit-btn-{{ $item->id }}">Modifier</button>
+                                        @endif
+                                        @if ($user->hasPermission('delete_storage'))
+                                            <form id="delete-form-{{ $item->id }}" action="/inventory/{{ $item->id }}" method="POST" style="display: inline;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="button" class="btn btn-danger">Supprimer</button>
+                                            </form>
+                                        @endif
+                                    </td>
+                                @endif
                             </tr>
                         @endforeach
 

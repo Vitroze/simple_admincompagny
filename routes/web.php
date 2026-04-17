@@ -399,14 +399,29 @@ Route::get("/storage", function () use ($CONFIG_STATUS_ITEMS) {
         return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
     }
 
+    if (!$user->hasPermission('view_storage')) {
+        return redirect('/')->with("error", [
+            "title" => "Accès refusé",
+            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+        ]);
+    }
+
     $inventoryItems = Inventory::all();
-    return view("storage", compact("inventoryItems", "CONFIG_STATUS_ITEMS"));
+    $permissions = getPermission_navbar($user);
+    return view("storage", compact("inventoryItems", "CONFIG_STATUS_ITEMS", "user", "permissions"));
 });
 
 Route::post("/inventory-add", function (Request $request) use ($CONFIG_STATUS_ITEMS) {
     $user = Auth::user();
     if (!$user) {
         return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour ajouter un item']);
+    }
+
+    if (!$user->hasPermission('view_storage') or !$user->hasPermission('create_storage')) {
+        return redirect('/')->with("error", [
+            "title" => "Accès refusé",
+            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+        ]);
     }
 
     $request->validate([
@@ -433,6 +448,13 @@ Route::delete("/inventory/{id}", function ($id) {
         return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour supprimer un item']);
     }
 
+    if (!$user->hasPermission('view_storage') or !$user->hasPermission('delete_storage')) {
+        return redirect('/')->with("error", [
+            "title" => "Accès refusé",
+            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+        ]);
+    }
+
     $item = Inventory::find($id);
     if (!$item) {
         return back()->withErrors(['error' => 'Item non trouvé']);
@@ -446,6 +468,13 @@ Route::post("/inventory/{id}", function (Request $request, $id) use ($CONFIG_STA
     $user = Auth::user();
     if (!$user) {
         return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour modifier un item']);
+    }
+
+    if (!$user->hasPermission('view_storage') or !$user->hasPermission('edit_storage')) {
+        return redirect('/')->with("error", [
+            "title" => "Accès refusé",
+            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+        ]);
     }
 
     $item = Inventory::find($id);
