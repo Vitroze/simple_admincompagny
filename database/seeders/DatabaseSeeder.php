@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         $adminRank = Rank::create(['name' => 'admin', 'priority' => 1]);
-        Rank::create(['name' => 'user', 'priority' => 999]);
+        $userRank = Rank::create(['name' => 'user', 'priority' => 999]);
 
         // View Permissions
         $viewTicketsPermission = Permission::create(['name_permission' => 'view_tickets']);
@@ -29,23 +29,43 @@ class DatabaseSeeder extends Seeder
         $viewFacturesPermission = Permission::create(['name_permission' => 'view_factures']);
         $viewSettingsPermission = Permission::create(['name_permission' => 'view_settings']);
 
-        /////////
+        // Edit Permissions
         $deleteUsersPermission = Permission::create(['name_permission' => 'delete_users']);
         $editUsersPermission = Permission::create(['name_permission' => 'edit_users']);
         $viewReportsPermission = Permission::create(['name_permission' => 'view_reports']);
         $setRankPermission = Permission::create(['name_permission' => 'setrank']);
 
+        // Facture Permissions
+        $createFacturePermission = Permission::create(['name_permission' => 'create_facture']);
+        $editFacturePermission = Permission::create(['name_permission' => 'edit_facture']);
+        $deleteFacturePermission = Permission::create(['name_permission' => 'delete_facture']);
+        $downloadFacturePermission = Permission::create(['name_permission' => 'download_facture']);
+
         $adminRank->permissions()->attach([
+            // View Permissions
             $viewTicketsPermission->id,
             $manageUsersPermission->id,
             $viewStoragePermission->id,
             $viewFacturesPermission->id,
             $viewSettingsPermission->id,
+            // User Permissions
             $deleteUsersPermission->id,
             $editUsersPermission->id,
             $viewReportsPermission->id,
-            $setRankPermission->id
+            $setRankPermission->id,
+            // Facture Permissions
+            $createFacturePermission->id,
+            $editFacturePermission->id,
+            $deleteFacturePermission->id,
+            $downloadFacturePermission->id,
+        ]);
 
+        $userRank->permissions()->attach([
+            // View Permissions
+            $viewTicketsPermission->id,
+            $viewStoragePermission->id,
+            $viewFacturesPermission->id,
+            $downloadFacturePermission->id,
         ]);
 
         User::factory()->create([

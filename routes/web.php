@@ -224,7 +224,7 @@ Route::get("/factures", function () use ($CONFIG_STATUS) {
         return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
     }
 
-    if (!$user->hasPermission('view_facture')) {
+    if (!$user->hasPermission('view_factures')) {
         return redirect('/')->with("error", [
             "title" => "Accès refusé",
             "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
@@ -233,13 +233,20 @@ Route::get("/factures", function () use ($CONFIG_STATUS) {
 
     $factures = Facture::all();
     $permissions = getPermission_navbar($user);
-    return view('facture', compact('factures', 'CONFIG_STATUS', 'permissions'));
+    return view('facture', compact('factures', 'CONFIG_STATUS', 'permissions', 'user'));
 });
 
 Route::post("/factures-add", function (Request $request) use ($CONFIG_STATUS) {
     $user = Auth::user();
     if (!$user) {
         return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    if (!$user->hasPermission('view_factures') or !$user->hasPermission('create_facture')) {
+        return redirect('/')->with("error", [
+            "title" => "Accès refusé",
+            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+        ]);
     }
 
     $request->validate([
@@ -284,6 +291,13 @@ Route::post("/factures/{id}", function (Request $request, $id) use ($CONFIG_STAT
     $user = Auth::user();
     if (!$user) {
         return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    if (!$user->hasPermission('view_factures') or !$user->hasPermission('edit_facture')) {
+        return redirect('/')->with("error", [
+            "title" => "Accès refusé",
+            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+        ]);
     }
 
     $facture = Facture::find($id);
@@ -334,6 +348,13 @@ Route::delete("/factures/{id}", function ($id) {
         return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
     }
 
+    if (!$user->hasPermission('view_factures') or !$user->hasPermission('delete_facture')) {
+        return redirect('/')->with("error", [
+            "title" => "Accès refusé",
+            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+        ]);
+    }
+
     $facture = Facture::find($id);
     if (!$facture) {
         return back()->withErrors(['error' => 'Facture non trouvée']);
@@ -347,6 +368,13 @@ Route::get("/factures-download/{id}", function ($id) {
     $user = Auth::user();
     if (!$user) {
         return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    if (!$user->hasPermission('view_factures') or !$user->hasPermission('download_facture')) {
+        return redirect('/')->with("error", [
+            "title" => "Accès refusé",
+            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+        ]);
     }
 
     $facture = Facture::find($id);
