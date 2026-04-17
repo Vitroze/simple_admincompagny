@@ -18,6 +18,33 @@ function generatePDF($facture)
     return $pdf->download($facture->reference . '.pdf');
 }
 
+function getPermission_navbar($user)
+{
+    $permissions = [];
+
+    if ($user->hasPermission('view_tickets')) {
+        $permissions[] = 'view_tickets';
+    }
+
+    if ($user->hasPermission('manage_users')) {
+        $permissions[] = 'manage_users';
+    }
+
+    if ($user->hasPermission('view_storage')) {
+        $permissions[] = 'view_storage';
+    }
+
+    if ($user->hasPermission('view_factures')) {
+        $permissions[] = 'view_factures';
+    }
+
+    if ($user->hasPermission('view_settings')) {
+        $permissions[] = 'view_settings';
+    }
+
+    return $permissions;
+}
+
 Route::get('/', function () {
     $user = Auth::user();
     if (!$user) {
@@ -29,7 +56,8 @@ Route::get('/', function () {
     // TODO: Récupérer les données d'activité depuis le paramètre
     // TODO: Récupérer le nombre de ticket à traiter et traité depuis tickets
 
-    return view('welcome', compact('users', 'lastUser'));
+    $permissions = getPermission_navbar($user);
+    return view('welcome', compact('users', 'lastUser', 'permissions'));
 });
 
 Route::get('/login', function () {
@@ -124,7 +152,8 @@ Route::get('/manage-users', function () {
     $hasPermissionDelete = $user->hasPermission('delete_users');
     $hasPermissionEdit = $user->hasPermission('edit_users');
     $hasPermissionSetRank = $user->hasPermission('setrank');
-    return view('manage_users', compact('users', 'ranks', 'hasPermissionDelete', 'hasPermissionEdit', 'hasPermissionSetRank'));
+    $permissions = getPermission_navbar($user);
+    return view('manage_users', compact('users', 'ranks', 'hasPermissionDelete', 'hasPermissionEdit', 'hasPermissionSetRank', 'permissions'));
 });
 
 //bouton supprimmer
@@ -195,8 +224,16 @@ Route::get("/factures", function () use ($CONFIG_STATUS) {
         return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
     }
 
+    if (!$user->hasPermission('view_facture')) {
+        return redirect('/')->with("error", [
+            "title" => "Accès refusé",
+            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+        ]);
+    }
+
     $factures = Facture::all();
-    return view('facture', compact('factures', 'CONFIG_STATUS'));
+    $permissions = getPermission_navbar($user);
+    return view('facture', compact('factures', 'CONFIG_STATUS', 'permissions'));
 });
 
 Route::post("/factures-add", function (Request $request) use ($CONFIG_STATUS) {

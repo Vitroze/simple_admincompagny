@@ -19,24 +19,28 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        Rank::create(['name' => 'admin', 'priority' => 1]);
+        $adminRank = Rank::create(['name' => 'admin', 'priority' => 1]);
         Rank::create(['name' => 'user', 'priority' => 999]);
 
-        Permission::create(['name_permission' => 'manage_users']);
-        Permission::create(['name_permission' => 'delete_users']);
-        Permission::create(['name_permission' => 'edit_users']);
-        Permission::create(['name_permission' => 'view_reports']);
-        Permission::create(['name_permission' => 'setrank']);
+        // View Permissions
+        $viewTicketsPermission = Permission::create(['name_permission' => 'view_tickets']);
+        $manageUsersPermission = Permission::create(['name_permission' => 'manage_users']);
+        $viewStoragePermission = Permission::create(['name_permission' => 'view_storage']);
+        $viewFacturesPermission = Permission::create(['name_permission' => 'view_factures']);
+        $viewSettingsPermission = Permission::create(['name_permission' => 'view_settings']);
 
-        $adminRank = Rank::where('name', 'admin')->first();
-        $manageUsersPermission = Permission::where('name_permission', 'manage_users')->first();
-        $deleteUsersPermission = Permission::where('name_permission', 'delete_users')->first();
-        $editUsersPermission = Permission::where('name_permission', 'edit_users')->first();
-        $viewReportsPermission = Permission::where('name_permission', 'view_reports')->first();
-        $setRankPermission = Permission::where('name_permission', 'setrank')->first();
+        /////////
+        $deleteUsersPermission = Permission::create(['name_permission' => 'delete_users']);
+        $editUsersPermission = Permission::create(['name_permission' => 'edit_users']);
+        $viewReportsPermission = Permission::create(['name_permission' => 'view_reports']);
+        $setRankPermission = Permission::create(['name_permission' => 'setrank']);
 
         $adminRank->permissions()->attach([
+            $viewTicketsPermission->id,
             $manageUsersPermission->id,
+            $viewStoragePermission->id,
+            $viewFacturesPermission->id,
+            $viewSettingsPermission->id,
             $deleteUsersPermission->id,
             $editUsersPermission->id,
             $viewReportsPermission->id,
