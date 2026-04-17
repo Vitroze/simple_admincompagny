@@ -41,6 +41,11 @@ class DatabaseSeeder extends Seeder
         $deleteFacturePermission = Permission::create(['name_permission' => 'delete_facture']);
         $downloadFacturePermission = Permission::create(['name_permission' => 'download_facture']);
 
+        // Storage Permissions
+        $createStoragePermission = Permission::create(['name_permission' => 'create_storage']);
+        $editStoragePermission = Permission::create(['name_permission' => 'edit_storage']);
+        $deleteStoragePermission = Permission::create(['name_permission' => 'delete_storage']);
+
         $adminRank->permissions()->attach([
             // View Permissions
             $viewTicketsPermission->id,
@@ -58,6 +63,10 @@ class DatabaseSeeder extends Seeder
             $editFacturePermission->id,
             $deleteFacturePermission->id,
             $downloadFacturePermission->id,
+            // Storage Permissions
+            $createStoragePermission->id,
+            $editStoragePermission->id,
+            $deleteStoragePermission->id,
         ]);
 
         $userRank->permissions()->attach([
