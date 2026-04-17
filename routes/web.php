@@ -110,7 +110,10 @@ Route::get('/manage-users', function () {
 
     $users = User::all();
     $ranks = Rank::all();
-    return view('manage_users', compact('users', 'ranks'));
+    $hasPermissionDelete = $user->hasPermission('delete_users');
+    $hasPermissionEdit = $user->hasPermission('edit_users');
+    $hasPermissionSetRank = $user->hasPermission('setrank');
+    return view('manage_users', compact('users', 'ranks', 'hasPermissionDelete', 'hasPermissionEdit', 'hasPermissionSetRank'));
 });
 
 //bouton supprimmer
@@ -120,13 +123,13 @@ Route::delete('/users/{id}', function ($id) {
         return redirect('/login')->withErrors(['nologin' => 'Vous devez être connecté pour accéder à cette page']);
     }
 
-    if (!$user->hasPermission('manage_users') or !$user->hasPermission('delete_users')) {
-        return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour supprimer des utilisateurs']);
-    }
-
     $userDelete = User::findOrFail($id);
     if ($userDelete->id === $user->id) {
         return redirect('/manage-users')->withErrors(['error' => 'Vous ne pouvez pas supprimer votre propre compte']);
+    }
+
+    if (!$user->hasPermission('manage_users') or !$user->hasPermission('delete_users', $userDelete)) {
+        return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour supprimer cette utilisateur']);
     }
 
     $userDelete->delete();
@@ -140,21 +143,21 @@ Route::post('/users/{id}', function (Request $request, $id) {
         return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
     }
 
-    if (!$user->hasPermission('manage_users') or !$user->hasPermission('edit_users')) {
-        return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour modifier des utilisateurs']);
-    }
-
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'usergroup' => 'required|string|exists:ranks,name',
-    ]);
-
     $userEdit = User::findOrFail($id);
     if (!$userEdit) {
         return back()->withErrors(['error' => 'Utilisateur non trouvé']);
     }
 
-    if ($request->usergroup != $userEdit->usergroup and !$user->hasPermission('setrank')) {
+    if (!$user->hasPermission('manage_users') or !$user->hasPermission('edit_users', $userEdit)) {
+        return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour modifier cette utilisateur']);
+    }
+
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'usergroup' => 'string|exists:ranks,name',
+    ]);
+
+    if ($request->usergroup and $request->usergroup != $userEdit->usergroup and !$user->hasPermission('setrank', $userEdit)) {
         return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour changer le rang d\'un utilisateur']);
     }
 

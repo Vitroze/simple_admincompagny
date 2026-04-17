@@ -19,8 +19,8 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        Rank::create(['name' => 'admin']);
-        Rank::create(['name' => 'user']);
+        Rank::create(['name' => 'admin', 'priority' => 1]);
+        Rank::create(['name' => 'user', 'priority' => 999]);
 
         Permission::create(['name_permission' => 'manage_users']);
         Permission::create(['name_permission' => 'delete_users']);

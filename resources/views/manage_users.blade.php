@@ -233,7 +233,10 @@
                             <th>Nom d'utilisateur</th>
                             <th>Email</th>
                             <th>Rôle</th>
-                            <th>Actions</th>
+
+                            @if ($hasPermissionEdit || $hasPermissionDelete)
+                                <th>Actions</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -244,14 +247,22 @@
                             <td>{{ $user->name }}</td>
                             <td>{{ $user->email }}</td>
                             <td>{{ $user->usergroup }}</td>
-                            <td>
-                                <button class="btn btn-primary">Modifier</button>
-                                <button class="btn btn-danger">Supprimer</button>
-                               <form action="/users/{{ $user->id }}" method="POST" style="display:inline;" id="delete-form-{{ $user->id }}">
-                                   @csrf
-                                  @method('DELETE')
-                              </form>
-                            </td>
+
+                            @if ($hasPermissionEdit || $hasPermissionDelete)
+                                <td>
+                                    @if ($hasPermissionEdit)
+                                        <button class="btn btn-primary">Modifier</button>
+                                    @endif
+
+                                    @if ($hasPermissionDelete)
+                                        <button class="btn btn-danger">Supprimer</button>
+                                        <form action="/users/{{ $user->id }}" method="POST" style="display:inline;" id="delete-form-{{ $user->id }}">
+                                            @csrf
+                                            @method('DELETE')
+                                        </form>
+                                    @endif
+                                </td>
+                            @endif
                         </tr>
                         @endforeach
 
@@ -265,7 +276,7 @@
     <div class="popup_inputuser" style="display: none;">
         <div class="popup-content">
             <h2>Modifier l'utilisateur</h2>
-            <form action="/users/{{ $user->id }}" method="POST">
+            <form class="form_action_user" action="/users/{{ $user->id }}" method="POST">
                 @csrf
                 <div class="form-group">
                     <label for="name">Nom de l'utilisateur</label>
@@ -274,7 +285,7 @@
 
                 <div class="form-group">
                     <label for="usergroup">Rôle</label>
-                    <select id="usergroup" name="usergroup" required>
+                    <select id="usergroup" name="usergroup" @if (!$hasPermissionSetRank) disabled @endif required>
                         @foreach ($ranks as $rank)
                             <option value="{{ $rank->name }}" class="form-control">{{ trim($rank->name) }}</option>
                         @endforeach
@@ -296,7 +307,8 @@
             button.addEventListener('click', () => {
                 popup.style.display = 'flex';
                 document.getElementById('name').value = button.parentElement.parentElement.children[1].textContent;
-                document.getElementById('rank_id').value = button.parentElement.parentElement.children[3].textContent.trim();
+                document.getElementById('usergroup').value = button.parentElement.parentElement.children[3].textContent.trim();
+                document.querySelector('.form_action_user').action = `/users/${button.parentElement.parentElement.children[0].textContent}`;
             });
         });
 

@@ -31,7 +31,19 @@ class User extends Authenticatable
         ];
     }
 
-    public function hasPermission($permissionName): bool
+    public function canTargetUser(User $targetUser): bool
+    {
+        $currentUserRank = Rank::where('name', $this->usergroup)->first();
+        $targetUserRank = Rank::where('name', $targetUser->usergroup)->first();
+
+        if (!$currentUserRank || !$targetUserRank) {
+            return false;
+        }
+
+        return $currentUserRank->priority <= $targetUserRank->priority;
+    }
+
+    public function hasPermission($permissionName, User $targetUser = null): bool
     {
         $rank = Rank::where('name', $this->usergroup)->first();
         if (!$rank) {
@@ -39,6 +51,14 @@ class User extends Authenticatable
         }
 
         $permissions = $rank->permissions()->pluck('name_permission')->toArray();
-        return in_array($permissionName, $permissions);
+        if (!in_array($permissionName, $permissions)) {
+            return false;
+        }
+
+        if ($targetUser && !$this->canTargetUser($targetUser)) {
+            return false;
+        }
+
+        return true;
     }
 }

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Rank extends Model
 {
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'priority'];
 
 
     public function permissions()
