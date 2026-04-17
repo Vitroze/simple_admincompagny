@@ -281,12 +281,10 @@
                                 <td>
                                     <button class="btn btn-primary" onclick="window.location.href='/factures-download/{{ $facture->id }}'">Télécharger</button>
                                     <button class="btn btn-primary modify-items" id="modify-{{ $facture->id }}">Modifier</button>
-                                    /* <button class="btn btn-danger" id="delete-{{ $facture->id }}">Supprimer</button> */
+                                    <button class="btn btn-danger" id="delete-{{ $facture->id }}">Supprimer</button>
                                     <form id="{{ $facture->id }}" action="/factures/{{ $facture->id }}" method="POST" style="display: none;">
                                         @csrf
                                         @method('DELETE')
-
-                                        <button type="submit" class="btn btn-danger">Supprimer</button>
                                     </form>
                                 </td>
                             </tr>
