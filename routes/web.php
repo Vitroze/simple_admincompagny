@@ -5,7 +5,17 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Facture;
 
+// Generate PDF
+use Barryvdh\DomPDF\Facade\Pdf;
+
+function generatePDF($facture)
+{
+    $pdf = Pdf::loadView('facture_pdf', compact('facture'));
+    $pdf->setPaper('A4', 'portrait');
+    return $pdf->download($facture->reference . '.pdf');
+}
 
 Route::get('/', function () {
     $user = Auth::user();
@@ -91,4 +101,141 @@ Route::get('/logout', function () {
 
     Auth::logout();
     return redirect('/login');
+});
+
+$CONFIG_STATUS = [
+    'pending' => 'En attente',
+    'paid' => 'Payée',
+    'cancelled' => 'Annulée',
+];
+
+Route::get("/factures", function () use ($CONFIG_STATUS) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    $factures = Facture::all();
+    return view('facture', compact('factures', 'CONFIG_STATUS'));
+});
+
+Route::post("/factures-add", function (Request $request) use ($CONFIG_STATUS) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    $request->validate([
+        'client_name' => 'required|string|max:255',
+        'products' => 'required|json',
+        'status' => 'required|in:' . implode(',', array_keys($CONFIG_STATUS)),
+        'due_date' => 'required|date',
+    ]);
+
+    $products = json_decode($request->products, true);
+    $total_amount = 0;
+
+    if ($products === null || !is_array($products)) {
+        return back()->withErrors(['products' => 'Le format des produits est invalide']);
+    }
+
+    foreach ($products as $product) {
+        $total_amount += $product['price'] * $product['quantity'];
+    }
+
+    if ($total_amount < 0) {
+        return back()->withErrors(['products' => 'Le montant total ne peut pas être négatif']);
+    }
+
+    if (!isset($CONFIG_STATUS[$request->status])) {
+        return back()->withErrors(['status' => 'Statut invalide']);
+    }
+
+    Facture::create([
+        'reference' => 'FAC-' . Str::upper(Str::random(8)),
+        'client_name' => $request->client_name,
+        'products' => $request->products,
+        'total_amount' => $total_amount,
+        'status' => $request->status,
+        'due_date' => $request->due_date,
+    ]);
+
+    return back()->with('success', 'Facture ajoutée avec succès');
+});
+
+Route::post("/factures/{id}", function (Request $request, $id) use ($CONFIG_STATUS) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    $facture = Facture::find($id);
+    if (!$facture) {
+        return back()->withErrors(['error' => 'Facture non trouvée']);
+    }
+
+    $request->validate([
+        'client_name' => 'required|string|max:255',
+        'products' => 'required|json',
+        'status' => 'required|in:' . implode(',', array_keys($CONFIG_STATUS)),
+        'due_date' => 'required|date',
+    ]);
+
+    $products = json_decode($request->products, true);
+    $total_amount = 0;
+
+    if ($products === null || !is_array($products)) {
+        return back()->withErrors(['products' => 'Le format des produits est invalide']);
+    }
+
+    foreach ($products as $product) {
+        $total_amount += $product['price'] * $product['quantity'];
+    }
+
+    if ($total_amount < 0) {
+        return back()->withErrors(['products' => 'Le montant total ne peut pas être négatif']);
+    }
+
+    if (!isset($CONFIG_STATUS[$request->status])) {
+        return back()->withErrors(['status' => 'Statut invalide']);
+    }
+
+    $facture->update([
+        'client_name' => $request->client_name,
+        'products' => $request->products,
+        'total_amount' => $total_amount,
+        'status' => $request->status,
+        'due_date' => $request->due_date,
+    ]);
+
+    return back()->with('success', 'Facture modifiée avec succès');
+});
+
+Route::delete("/factures/{id}", function ($id) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    $facture = Facture::find($id);
+    if (!$facture) {
+        return back()->withErrors(['error' => 'Facture non trouvée']);
+    }
+
+    $facture->delete();
+    return back()->with('success', 'Facture supprimée avec succès');
+});
+
+Route::get("/factures-download/{id}", function ($id) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    $facture = Facture::find($id);
+    if (!$facture) {
+        return back()->withErrors(['error' => 'Facture non trouvée']);
+    }
+
+    return generatePDF($facture);
 });
