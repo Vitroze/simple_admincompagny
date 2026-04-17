@@ -134,7 +134,6 @@ Route::delete('/users/{id}', function ($id) {
     return back()->with('success', 'Utilisateur supprimé avec succès');
 });
 
-//modification du role
 Route::post('/users/{id}', function (Request $request, $id) {
     $user = Auth::user();
     if (!$user) {
@@ -150,11 +149,19 @@ Route::post('/users/{id}', function (Request $request, $id) {
         'usergroup' => 'required|string|exists:ranks,name',
     ]);
 
+    $userEdit = User::findOrFail($id);
+    if (!$userEdit) {
+        return back()->withErrors(['error' => 'Utilisateur non trouvé']);
+    }
+
+    if ($request->usergroup != $userEdit->usergroup and !$user->hasPermission('setrank')) {
+        return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour changer le rang d\'un utilisateur']);
+    }
+
     if ($user->id == $id) {
         return back()->withErrors(['error' => 'Vous ne pouvez pas modifier votre propre compte']);
     }
 
-    $userEdit = User::findOrFail($id);
     $userEdit->usergroup = $request->usergroup;
     $userEdit->name = $request->name;
     $userEdit->save();
