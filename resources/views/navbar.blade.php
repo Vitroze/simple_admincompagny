@@ -32,7 +32,7 @@
             </a>
         </li>
         <li>
-            <a href="/generate-factures">
+            <a href="/factures">
                 <i class="fas fa-file-invoice"></i>
                 <span>Générer des factures/devis</span>
             </a>
