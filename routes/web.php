@@ -92,3 +92,14 @@ Route::get('/logout', function () {
     Auth::logout();
     return redirect('/login');
 });
+
+Route::get('/settings', function () {
+    $user = Auth::user();
+
+    if (!$user) {
+        return redirect('/login');
+    }
+
+    return view('settings', ['user' => $user]);
+});
+
