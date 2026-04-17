@@ -259,7 +259,10 @@
                             <th>Montant total</th>
                             <th>Date d'échéance</th>
                             <th>Dernière modification</th>
-                            <th>Actions</th>
+
+                            @if ($user->hasPermission('edit_facture') or $user->hasPermission('delete_facture') or $user->hasPermission('download_facture'))
+                                <th>Actions</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -267,7 +270,9 @@
                         @foreach ($factures as $facture)
                             <tr>
                                 <td>{{ $facture->id }}</td>
-                                <td hidden>{{ $facture->products }}</td>
+                                @if ($user->hasPermission('edit_facture'))
+                                    <td hidden>{{ $facture->products }}</td>
+                                @endif
                                 <td>{{ $facture->reference }}</td>
                                 <td>{{ $facture->client_name }}</td>
                                 <td>
@@ -278,15 +283,25 @@
                                 <td>{{ number_format($facture->total_amount, 2) }} €</td>
                                 <td>{{ \Carbon\Carbon::parse($facture->due_date)->format('d/m/Y') }}</td>
                                 <td>{{ \Carbon\Carbon::parse($facture->updated_at)->format('d/m/Y H:i') }}</td>
-                                <td>
-                                    <button class="btn btn-primary" onclick="window.location.href='/factures-download/{{ $facture->id }}'">Télécharger</button>
-                                    <button class="btn btn-primary modify-items" id="modify-{{ $facture->id }}">Modifier</button>
-                                    <button class="btn btn-danger" id="delete-{{ $facture->id }}">Supprimer</button>
-                                    <form id="{{ $facture->id }}" action="/factures/{{ $facture->id }}" method="POST" style="display: none;">
-                                        @csrf
-                                        @method('DELETE')
-                                    </form>
-                                </td>
+                                @if ($user->hasPermission('edit_facture') or $user->hasPermission('delete_facture') or $user->hasPermission('download_facture'))
+                                    <td>
+                                        @if ($user->hasPermission('download_facture'))
+                                            <button class="btn btn-primary" onclick="window.location.href='/factures-download/{{ $facture->id }}'">Télécharger</button>
+                                        @endif
+
+                                        @if ($user->hasPermission('edit_facture'))
+                                            <button class="btn btn-primary modify-items" id="modify-{{ $facture->id }}">Modifier</button>
+                                        @endif
+
+                                        @if ($user->hasPermission('delete_facture'))
+                                            <button class="btn btn-danger" id="delete-{{ $facture->id }}">Supprimer</button>
+                                            <form id="{{ $facture->id }}" action="/factures/{{ $facture->id }}" method="POST" style="display: none;">
+                                                @csrf
+                                                @method('DELETE')
+                                            </form>
+                                        @endif
+                                    </td>
+                                @endif
                             </tr>
                         @endforeach
 
