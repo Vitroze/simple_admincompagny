@@ -63,13 +63,15 @@
 
         <div class="container">
             <section class="ajouter_ticket">
-            <h1>ajouter un tickes</h1>
+            <h1>ajouter un tickets</h1>
                 <form action="/tickets" method="post">
                         @csrf
                         <br>
-                        <br>
-                        <textarea class="description" id="description" name="description" placeholder="Veiller explique votre demande"></textarea>
-                        <br>
+                        <div classe="message_ticket">
+                            <br>
+                            <textarea  id="description" name="description" placeholder="Veiller explique votre demande"></textarea>
+                            <br>
+                        </div>
                         <br>
                         <div class="inscription">
                             <br>
@@ -80,42 +82,60 @@
                         </div>
                 </form>
 
-            </section>
-            //afficher les ticker stocke dans la base de donné 
-             <section classe="voire_ticket"  >
-                <h2> Voir les tickes!!!</h2>
+            </section> 
+             <section classe="voire_ticket">
+                <h2> Voir les tickets</h2>
                 <div class="tout_bloc">
                     @foreach($tickets as $ticket)
                     <div class="bloc" >
                         <p class="description">{{$ticket->description}}</p>
+                        <button class="bouton_repondre add_reponse" type="submit" data-id={{$ticket->id}}>Repondre</button>
+                        <a href="/ticket_dialogue/{{$ticket->id}}">Voir plus</a>
                         <div class="date_statut">
-                        <p >
-                        {{$ticket->statut}}
-                        
-                       </p>
-                        <p >
-                            {{ \Carbon\Carbon::parse($ticket->date_ticket)->format('d/m/Y') }}
-                        
-                        </p>
+                            <p >
+                            {{$ticket->statut}}
+                            </p>
+                            <p>
+                                {{ \Carbon\Carbon::parse($ticket->date_ticket)->format('d/m/Y') }}
+                            </p>
                         </div>
 
                     </div>
                     @endforeach
             
                 </div>
-
-
-
-
             </section>
+            <div class="popup_inputuser" style="display: none;">
+                <div class="popup-content">
+                    <form action="/ticket_dialogue" method="POST">
+                        @csrf
+                        <div>
+                        </div>
+                        <div>
+                        <input type="hidden" name="ticket_id" id="ticket_id">
+                        <input type="text"id="reponse" name="reponse" placeholder="metez votre reponse">
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-danger close-popup">Annuler</button>
+                            <button type="submit"class=" btn_envoyer">Envoyer</button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
             <a href="/"></a>
         </div>
     </div>
     <style>
+        textarea{
+            width: 250px;
+            height: 100px;
+        }
         .description{
-        width: 30%;     
-        height: 100px;
-        resize: none;
+            width: 30%;     
+            height: 100px;
+            resize: none;
         }
         .ajouter_ticket{
             
@@ -123,17 +143,22 @@
             align-items: center;
            
         }
-        /* button{
-            display: flex;
-            justify-content: flex-end;
-
-        } */
         .inscription{
-           
-            padding-left: auto ;     
+            display: flex;
+            flex-direction: row;  
+            margin-left: 20px;  
+            margin-right: 100px;
         }
+      
         button{
-            background: linear-gradient(70)
+            background: linear-gradient(70);
+            margin-left: 35px;
+            margin-right: 100px;
+        }
+        .btn_envoyer{
+            margin-right: 100px;
+            margin-left: 400px;
+            margin: 20px;
         }
         .bloc{
             background-color: white;
@@ -153,7 +178,6 @@
         }
         .tout_bloc{
             max-width: 95%;
-            background: red;
             display: grid;
             grid-template-columns: repeat(3, 400px);
             margin-left: 20px;
@@ -166,7 +190,34 @@
             justify-content: space-between;
 
         }
-        
+        .popup_inputuser {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .popup-content {
+            background-color: var(--white);
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+            box-shadow: var(--shadow-md);
+        }
+        .popup-content input {
+            width: 95%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            width: auto;
+            height: auto;
+            padding-right: 200px;
+            padding-bottom: 50px;
+        }
     
     </style>
     <script>
@@ -192,6 +243,28 @@
                     timerProgressBar: true
                 });
             @endif
+
+            let popup = document.querySelector('.popup_inputuser');
+            let reponse = document.getElementById('reponse');
+            let button_add = document.querySelector('.add_reponse');
+            let ticket_id=document.getElementById('ticket_id')
+
+            document.querySelectorAll(".bouton_repondre").forEach(button=>{button.addEventListener('click', () => {
+                let id=button.getAttribute('data-id');
+                popup.style.display = 'flex';
+                ticket_id.value=id
+                reponse.value= '';
+                button_add.textContent = 'Repondre';
+                });
+            });
+
+            document.querySelectorAll('.btn-danger').forEach(button => {
+                if (button.classList.contains('close-popup')) {
+                    button.addEventListener('click', () => {
+                        popup.style.display = 'none';
+                    });
+                }
+            });
 
     </script>
 </body>

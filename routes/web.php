@@ -7,7 +7,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 //use PHPUnit\Framework\Attributes\Ticket;
 use App\Models\Ticket;
-
+use App\Models\dialogue;
+use App\Models\Dialogue as ModelsDialogue;
 
 Route::get('/', function () {
     $user = Auth::user();
@@ -75,7 +76,11 @@ Route::get('/ticket', function () {
     return view('ticket', compact("tickets"));
 });
 
-Route::post('/tickets',function(Request $request){     //attention sur la redirection avec le ticket avec le k 
+Route::post('/tickets',function(Request $request){     
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login');
+    }
 
     $request->validate([
             "description"=>"required|string",
@@ -86,7 +91,7 @@ Route::post('/tickets',function(Request $request){     //attention sur la redire
         "description"=>$request->description,
         "statut"=>"ouvert",
         "date_tiket"=>$request->date_tiket,
-        "user_id"=>3
+        "user_id"=>$user->id
         ]);
 
 
@@ -94,6 +99,36 @@ Route::post('/tickets',function(Request $request){     //attention sur la redire
     return redirect('/ticket')->with('success', 'Votre ticket a été créé avec succès. Vous pouvez maintenant le consulte voir mes tickes.');
 });
 
+Route::get('/ticket_dialogue', function () {
+    $dialogue=Dialogue::all();
+    return view('ticket_dialogue', compact("dialogue"));
+});
+Route::post('/ticket_dialogue',function(Request $request){  
+       
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login');
+    }
+    $request->validate([
+        "reponse"=>"required|string|max:200"
+    ]);
+    
+
+    Dialogue::create([
+        "reponse"=>$request->reponse,
+        "user_id"=>$user->id,
+        "ticket_id"=>$request->ticket_id,
+        "user_name"=>$user->name,
+        ]);
 
 
-//retire le contoler est le metre dans web.php avec ci qu il y a dans la class tiketContoler et rajouter dans web.php le lien avec le model tike.php
+
+    return redirect('/ticket_dialogue/' . $request->ticket_id)->with('reponse', 'Votre message a bien ete envoye. Vous pouvez maintenant le consulte  les commentaire du ticket.');
+});
+Route::get('/ticket_dialogue/{id}',function($id){
+    $ticket=Ticket::find($id);
+    $dialogues=Dialogue::where('ticket_id',$id)->get();
+    return view('ticket_dialogue',compact("ticket","dialogues"));
+});
+
+
