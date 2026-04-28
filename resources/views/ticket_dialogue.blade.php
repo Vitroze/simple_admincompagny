@@ -79,7 +79,7 @@
                        
                     </div>
                     @endforeach
-                    <a class="retoure" href="/ticket">retoure</a>
+                    <a class="retoure" href="/ticket">retour</a>
                 </div>
                 
             </section>
@@ -110,6 +110,7 @@
             border: solid #1d1c1c;
         }
         .tout_bloc_dialogue{
+            margin-top: 20px;
             max-width: 95%;
             background-color: white;
             margin-left: 20px;

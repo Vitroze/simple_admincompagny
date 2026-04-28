@@ -54,6 +54,7 @@
             padding: 20px;
         }
     </style>
+    <link rel="stylesheet" href="{{asset('style_ticket.css')}}">
 </head>
 <body>
 
@@ -128,7 +129,7 @@
         </div>
     </div>
     <style>
-        textarea{
+            textarea{
             width: 250px;
             height: 100px;
         }
@@ -218,8 +219,8 @@
             padding-right: 200px;
             padding-bottom: 50px;
         }
-    
     </style>
+    
     <script>
             // SweetAlert for errors
             @if ($errors->any())
