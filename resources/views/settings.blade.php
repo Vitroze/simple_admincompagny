@@ -15,7 +15,11 @@
                 <div class="information">
                     <div class="bloc">
                         <h1>Modifier l'utilisateur</h1>
-                        <p>modifier</p>
+                        <p><button class="btn btn-primary">Modifier</button></p>
+                                <form action="/users/{{ $user->id }}/edit" method="GET" style="display:inline;">
+                                    <button class="btn btn-primary">Modifier</button>
+                                </form>
+                        
 
 <form action="/manage_users/{{ $user->id }}" method="POST">
     @csrf
@@ -24,8 +28,6 @@
     <label>Nom :</label>
     <input type="text" name="name" value="{{ $user->name }}">
 
-    <label>Email :</label>
-    <input type="email" name="email" value="{{ $user->email }}">
 
     <label>Rôle :</label>
     <select name="usergroup">
@@ -36,7 +38,17 @@
     <button type="submit">Enregistrer</button>
 </form>
                         <div class="bloc">
-                        <h3>A</h3>
+                        <h3><input type="checkbox" id="horns" name="horns" />
+    <label for="horns">Ticket</label>
+    <input type="checkbox" id="horns" name="horns" />
+    <label for="horns">Gerer les utilisateurs</label>
+    <input type="checkbox" id="horns" name="horns" />
+    <label for="horns">Inventaire</label>
+    <input type="checkbox" id="horns" name="horns" />
+    <label for="horns">Genrer les facture devis</label>
+    <input type="checkbox" id="horns" name="horns" />
+    <label for="horns">Parametre</label>
+    <input type="checkbox" id="horns" name="horns" /></h3>
                         <p>Il</p>
                     </div>
                 </div>
@@ -191,6 +203,11 @@
   text-align: center;
 }
 .bloc p{
+    display:flex;
+    justify-content:end;
+    text-align: center;
+}
+.btn btn-primary{
     display:flex;
     justify-content:end;
     text-align: center;

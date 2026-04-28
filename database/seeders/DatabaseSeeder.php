@@ -23,3 +23,23 @@ class DatabaseSeeder extends Seeder
         ]);
     }
 }
+
+$permissions = [
+    'admin' => [
+        'manage_users' => true,
+        'inventory' => true,
+        'settings' => true,
+    ],
+
+    'user' => [
+        'manage_users' => false,
+        'inventory' => true,
+        'settings' => true,
+    ],
+
+    'invite_temporaire' => [
+        'manage_users' => false,
+        'inventory' => true,
+        'settings' => false,
+    ],
+];
