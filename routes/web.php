@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Role;
+use App\Models\Droit;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -95,11 +97,102 @@ Route::get('/logout', function () {
 
 Route::get('/settings', function () {
     $user = Auth::user();
+    if (!$user) return redirect('/login');
 
+    $roles = Role::all();
+    $users = User::all();
+    return view('settings', compact('roles', 'users', 'user'));
+});
+
+Route::post('/settings', function (Request $request) {
+    $request->validate([
+        "nom" => "required|string|max:255|unique:role,nom",
+    ]);
+
+    Role::create([
+        "nom" => $request->nom,
+    ]);
+
+    return redirect('/settings')->with('roles', 'Le rôle a été créé avec succès.');
+});
+
+Route::post('/settings/droit',function(Request $request){  
+    $user = Auth::user();
     if (!$user) {
         return redirect('/login');
     }
 
-    return view('settings', ['user' => $user]);
+    Droit::updateOrCreate(
+        ['user_id' => $request->user_id,
+         'role_id' => $request->role_id
+        ],
+        [
+            'ticket' => $request->input('ticket', 0),
+            'inventaire' => $request->input('inventaire', 0),
+            'gerer_user' => $request->input('gerer_user', 0),
+            'gerer_facture' => $request->input('gerer_facture', 0),
+            'parametre' => $request->input('parametre', 0),
+        ]
+    );
+ 
+    return redirect('/settings')->with('permission', 'Les permissions ont été attribuées ou modifiées avec succès.');
 });
 
+
+Route::get('tickets', function () {
+    $user = Auth::user();
+    $droit = Droit::where('user_id', $user->id)->first();
+    if (!$droit || !$droit->ticket) {
+        return redirect('/')->with('error','Accès refusé. Vous n avez pas la permission daccéder à cette page');
+    }
+
+    return view('tickets');
+});
+Route::get('inventaire', function () {
+    $user = Auth::user();
+    $droit = Droit::where('user_id', $user->id)->first();
+    if (!$droit || !$droit->inventaire) {
+        return redirect('/')->with('error','Accès refusé. Vous n avez pas la permission daccéder à cette page');
+    }
+
+    return view('inventaire');
+});
+Route::get('gerer_user', function () {
+    $user = Auth::user();
+    $droit = Droit::where('user_id', $user->id)->first();
+    if (!$droit || !$droit->gerer_user) {
+        return redirect('/')->with('error','Accès refusé. Vous n avez pas la permission daccéder à cette page');
+    }
+
+    return view('gerer_user');
+});
+Route::get('gerer_facture', function () {
+    $user = Auth::user();
+    $droit = Droit::where('user_id', $user->id)->first();
+    if (!$droit || !$droit->gerer_facture) {
+        return redirect('/')->with('error','Accès refusé. Vous n avez pas la permission daccéder à cette page');
+    }
+    return view('gerer_facture');
+});
+Route::get('parametre', function () {
+    $user = Auth::user();
+    $droit = Droit::where('user_id', $user->id)->first ();
+    if (!$droit || !$droit->parametre) {
+        return redirect('/')->with('error','Accès refusé. Vous n avez pas la permission daccéder à cette page');
+    }
+    return view('parametre');
+});
+Route::post('settings/supprimer',function(Request $request){
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login');
+    }
+    $utilisateur = User::where('id', $request->user_id)->first();
+    
+    Droit::where('user_id',$request->user_id)
+            ->where('role_id',$request->role_id)
+            ->delete();
+
+
+    return redirect('/settings')->with('droit', 'Les droits ont été supprimés avec succès.');
+});

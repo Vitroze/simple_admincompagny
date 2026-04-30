@@ -68,7 +68,7 @@
                 <div class="information">
                     <div class="bloc">
                         <h1>Modifier l'utilisateur</h1>
-                       
+                        <button class="btn btn-primary">Modifier</button>
                         
                         
 <div class="cree_role">
@@ -121,22 +121,9 @@
 
             <section class="carte">
                 <h2>Supprimer un rôle</h2>
-                <form action="settings/supprimer" method="POST">
-                    @csrf
-                    <label>Nom :</label>
-                    <select name="user_id" id="user_name">
-                        @foreach($users as $utilisateur)
-                            <option value="{{ $utilisateur->id }}">{{ $utilisateur->name }}</option>
-                        @endforeach
-                    </select>
-                    <label>Rôle :</label>
-                    <select name="role_id">
-                        @foreach($roles as $role)
-                            <option value="{{$role->id }}">{{ $role->nom }}</option>
-                        @endforeach
-                    </select>
-                    <button type="submit">Supprimer</button>
-                    </form>
+                <div class="interieur">
+                    <p>A</p>
+                <div>
             </section>
         </div>
     </div>
@@ -227,7 +214,7 @@
             @endif
 
             // Success message
-    @if (session('permission'))
+    @if (session('permmission'))
         Swal.fire({
             icon: 'success',
             title: 'Inscription réussie !',
@@ -237,27 +224,7 @@
             timerProgressBar: true
         });
     @endif
-        @if ($errors->any())
-                Swal.fire({
-            icon: 'error',
-            title: 'Erreur d\'inscription',
-            html: '<ul style="text-align: left; padding-left: 20px;">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>',
-            confirmButtonColor: '#3c00ff',
-            confirmButtonText: 'Corriger'
-                });
-            @endif
-
-            // Success message
-    @if (session('droit'))
-        Swal.fire({
-            icon: 'success',
-            title: 'Inscription réussie !',
-            text: '{{ session('droit') }}',
-            confirmButtonColor: '#3c00ff',
-            timer: 3000,
-            timerProgressBar: true
-        });
-    @endif
+       
 
 </script>
 </body>
