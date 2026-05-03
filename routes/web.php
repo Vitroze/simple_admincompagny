@@ -4,10 +4,49 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Rank;
+use App\Models\Inventory;
 use App\Models\Role;
 use App\Models\Droit;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Facture;
 
+// Generate PDF
+use Barryvdh\DomPDF\Facade\Pdf;
+
+function generatePDF($facture)
+{
+    $pdf = Pdf::loadView('facture_pdf', compact('facture'));
+    $pdf->setPaper('A4', 'portrait');
+    return $pdf->download($facture->reference . '.pdf');
+}
+
+function getPermission_navbar($user)
+{
+    $permissions = [];
+
+    if ($user->hasPermission('view_tickets')) {
+        $permissions[] = 'view_tickets';
+    }
+
+    if ($user->hasPermission('manage_users')) {
+        $permissions[] = 'manage_users';
+    }
+
+    if ($user->hasPermission('view_storage')) {
+        $permissions[] = 'view_storage';
+    }
+
+    if ($user->hasPermission('view_factures')) {
+        $permissions[] = 'view_factures';
+    }
+
+    if ($user->hasPermission('view_settings')) {
+        $permissions[] = 'view_settings';
+    }
+
+    return $permissions;
+}
 
 Route::get('/', function () {
     $user = Auth::user();
@@ -20,7 +59,8 @@ Route::get('/', function () {
     // TODO: Récupérer les données d'activité depuis le paramètre
     // TODO: Récupérer le nombre de ticket à traiter et traité depuis tickets
 
-    return view('welcome', compact('users', 'lastUser'));
+    $permissions = getPermission_navbar($user);
+    return view('welcome', compact('users', 'lastUser', 'permissions'));
 });
 
 Route::get('/login', function () {

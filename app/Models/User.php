@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
@@ -28,6 +29,37 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function canTargetUser(User $targetUser): bool
+    {
+        $currentUserRank = Rank::where('name', $this->usergroup)->first();
+        $targetUserRank = Rank::where('name', $targetUser->usergroup)->first();
+
+        if (!$currentUserRank || !$targetUserRank) {
+            return false;
+        }
+
+        return $currentUserRank->priority <= $targetUserRank->priority;
+    }
+
+    public function hasPermission($permissionName, User $targetUser = null): bool
+    {
+        $rank = Rank::where('name', $this->usergroup)->first();
+        if (!$rank) {
+            return false;
+        }
+
+        $permissions = $rank->permissions()->pluck('name_permission')->toArray();
+        if (!in_array($permissionName, $permissions)) {
+            return false;
+        }
+
+        if ($targetUser && !$this->canTargetUser($targetUser)) {
+            return false;
+        }
+
+        return true;
     }
 }
 
