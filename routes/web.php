@@ -4,6 +4,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Rank;
+use App\Models\Permission;
 use App\Models\Inventory;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Facture;
@@ -132,369 +133,128 @@ Route::get('/logout', function () {
     return redirect('/login');
 });
 
-Route::get('/manage-users', function () {
-
-    $hasUser = Auth::user();
-    if (!$hasUser) {
-        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
-    }
-
+Route::get('/settings', function () {
     $user = Auth::user();
-    if (!$user->hasPermission('manage_users')) {
-        return redirect('/')->with("error", [
-            "title" => "Accès refusé",
-            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
-        ]);
+    if (!$user) return redirect('/login');
+
+    if (!$user->hasPermission('view_settings')) {
+        return redirect('/')->with('error', 'Accès refusé. Vous n avez pas la permission daccéder à cette page');
     }
 
-    $users = User::all();
-    $ranks = Rank::all();
-    $hasPermissionDelete = $user->hasPermission('delete_users');
-    $hasPermissionEdit = $user->hasPermission('edit_users');
-    $hasPermissionSetRank = $user->hasPermission('setrank');
+    $roles = Rank::all();
     $permissions = getPermission_navbar($user);
-    return view('manage_users', compact('users', 'ranks', 'hasPermissionDelete', 'hasPermissionEdit', 'hasPermissionSetRank', 'permissions'));
+    $allpermissions = Permission::all();
+    return view('settings', compact('roles', 'permissions', 'allpermissions', 'user'));
 });
 
-//bouton supprimmer
-Route::delete('/users/{id}', function ($id) {
+Route::post('/settings', function (Request $request) {
     $user = Auth::user();
     if (!$user) {
-        return redirect('/login')->withErrors(['nologin' => 'Vous devez être connecté pour accéder à cette page']);
+        return redirect('/login');
     }
 
-    $userDelete = User::findOrFail($id);
-    if ($userDelete->id === $user->id) {
-        return redirect('/manage-users')->withErrors(['error' => 'Vous ne pouvez pas supprimer votre propre compte']);
-    }
-
-    if (!$user->hasPermission('manage_users') or !$user->hasPermission('delete_users', $userDelete)) {
-        return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour supprimer cette utilisateur']);
-    }
-
-    $userDelete->delete();
-
-    return back()->with('success', 'Utilisateur supprimé avec succès');
-});
-
-Route::post('/users/{id}', function (Request $request, $id) {
-    $user = Auth::user();
-    if (!$user) {
-        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
-    }
-
-    $userEdit = User::findOrFail($id);
-    if (!$userEdit) {
-        return back()->withErrors(['error' => 'Utilisateur non trouvé']);
-    }
-
-    if (!$user->hasPermission('manage_users') or !$user->hasPermission('edit_users', $userEdit)) {
-        return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour modifier cette utilisateur']);
+    if (!$user->hasPermission('view_settings') or !$user->hasPermission('create_settings')) {
+        return redirect('/')->withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
     }
 
     $request->validate([
-        'name' => 'required|string|max:255',
-        'usergroup' => 'string|exists:ranks,name',
+        "nom" => "required|string|max:255|unique:ranks,name",
     ]);
 
-    if ($request->usergroup and $request->usergroup != $userEdit->usergroup and !$user->hasPermission('setrank', $userEdit)) {
-        return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour changer le rang d\'un utilisateur']);
+    if ($request->nom === 'admin' || $request->nom === 'user') {
+        return redirect('/settings')->withErrors(['nom' => 'Les rôles admin et user existent déjà et ne peuvent pas être créés']);
     }
 
-    if ($user->id == $id) {
-        return back()->withErrors(['error' => 'Vous ne pouvez pas modifier votre propre compte']);
-    }
+    Rank::create([
+        'name' => $request->nom,
+        'priority' => 1000,
+    ]);
 
-    $userEdit->usergroup = $request->usergroup;
-    $userEdit->name = $request->name;
-    $userEdit->save();
-
-    return back()->with('success', 'Utilisateur modifié avec succès');
+    return redirect('/settings')->with('success', 'Le rôle a été créé avec succès.');
 });
 
-$CONFIG_STATUS = [
-    'pending' => 'En attente',
-    'paid' => 'Payée',
-    'cancelled' => 'Annulée',
-];
-
-Route::get("/factures", function () use ($CONFIG_STATUS) {
+Route::post('/settings/droit',function(Request $request){
     $user = Auth::user();
     if (!$user) {
-        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
-    }
-
-    if (!$user->hasPermission('view_factures')) {
-        return redirect('/')->with("error", [
-            "title" => "Accès refusé",
-            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
-        ]);
-    }
-
-    $factures = Facture::all();
-    $permissions = getPermission_navbar($user);
-    return view('facture', compact('factures', 'CONFIG_STATUS', 'permissions', 'user'));
-});
-
-Route::post("/factures-add", function (Request $request) use ($CONFIG_STATUS) {
-    $user = Auth::user();
-    if (!$user) {
-        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
-    }
-
-    if (!$user->hasPermission('view_factures') or !$user->hasPermission('create_facture')) {
-        return redirect('/')->with("error", [
-            "title" => "Accès refusé",
-            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
-        ]);
+        return redirect('/login');
     }
 
     $request->validate([
-        'client_name' => 'required|string|max:255',
-        'products' => 'required|json',
-        'status' => 'required|in:' . implode(',', array_keys($CONFIG_STATUS)),
-        'due_date' => 'required|date',
+        'role_id' => 'required|exists:ranks,id',
+        "permissions" => "required|array",
+        "priority" => "required|integer|min:1|max:1000",
     ]);
 
-    $products = json_decode($request->products, true);
-    $total_amount = 0;
-
-    if ($products === null || !is_array($products)) {
-        return back()->withErrors(['products' => 'Le format des produits est invalide']);
+    if (!$user->hasPermission('view_settings') or !$user->hasPermission('edit_settings')) {
+        return redirect('/')-withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
     }
 
-    foreach ($products as $product) {
-        $total_amount += $product['price'] * $product['quantity'];
+    $role = Rank::find($request->role_id);
+    if (!$role) {
+        return redirect('/settings')->withErrors(['role_id' => 'Le rôle sélectionné est invalide']);
     }
 
-    if ($total_amount < 0) {
-        return back()->withErrors(['products' => 'Le montant total ne peut pas être négatif']);
+    if (!$user->canTargetRole($role)) {
+        return redirect('/settings')->withErrors(['role_id' => 'Vous ne pouvez pas cibler ce rôle']);
     }
 
-    if (!isset($CONFIG_STATUS[$request->status])) {
-        return back()->withErrors(['status' => 'Statut invalide']);
+    if ($user->getPriority() > $request->priority) {
+        return redirect('/settings')->withErrors(['priority' => 'Vous ne pouvez pas attribuer une priorité inférieure à votre propre priorité']);
     }
 
-    Facture::create([
-        'reference' => 'FAC-' . Str::upper(Str::random(8)),
-        'client_name' => $request->client_name,
-        'products' => $request->products,
-        'total_amount' => $total_amount,
-        'status' => $request->status,
-        'due_date' => $request->due_date,
-    ]);
+    if ($role->name === 'admin') {
+        return redirect('/settings')->withErrors(['role_id' => 'Les permissions du rôle admin ne peuvent pas être modifiées']);
+    }
 
-    return back()->with('success', 'Facture ajoutée avec succès');
+    $role->permissions()->detach();
+
+    foreach ($request->permissions as $permissionName) {
+        $permission = Permission::where('id', $permissionName)->first();
+        if ($permission) {
+            $role->permissions()->syncWithoutDetaching($permission->id);
+        }
+    }
+
+    if ($request->priority !== null) {
+        $role->priority = $request->priority;
+        $role->save();
+    }
+
+    return redirect('/settings')->with('success', 'Les permissions ont été attribuées ou modifiées avec succès.');
 });
 
-Route::post("/factures/{id}", function (Request $request, $id) use ($CONFIG_STATUS) {
+Route::post('settings/supprimer',function(Request $request){
+    $blacklistRanks = ['admin', 'user']; // Rôles interdits pour la suppression
     $user = Auth::user();
     if (!$user) {
-        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+        return redirect('/login');
     }
 
-    if (!$user->hasPermission('view_factures') or !$user->hasPermission('edit_facture')) {
-        return redirect('/')->with("error", [
-            "title" => "Accès refusé",
-            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
-        ]);
-    }
-
-    $facture = Facture::find($id);
-    if (!$facture) {
-        return back()->withErrors(['error' => 'Facture non trouvée']);
+    if (!$user->hasPermission('view_settings') or !$user->hasPermission('delete_settings')) {
+        return redirect('/')->withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
     }
 
     $request->validate([
-        'client_name' => 'required|string|max:255',
-        'products' => 'required|json',
-        'status' => 'required|in:' . implode(',', array_keys($CONFIG_STATUS)),
-        'due_date' => 'required|date',
+        'role_id' => 'required|exists:ranks,id',
     ]);
 
-    $products = json_decode($request->products, true);
-    $total_amount = 0;
-
-    if ($products === null || !is_array($products)) {
-        return back()->withErrors(['products' => 'Le format des produits est invalide']);
+    $role = Rank::find($request->role_id);
+    if (!$role) {
+        return redirect('/settings')->withErrors(['role_id' => 'Le rôle sélectionné est invalide']);
     }
 
-    foreach ($products as $product) {
-        $total_amount += $product['price'] * $product['quantity'];
+    if (!$user->canTargetRole($role)) {
+        return redirect('/settings')->withErrors(['role_id' => 'Vous ne pouvez pas supprimer ce rôle']);
     }
 
-    if ($total_amount < 0) {
-        return back()->withErrors(['products' => 'Le montant total ne peut pas être négatif']);
+    if (in_array($role->name, $blacklistRanks)) {
+        return redirect('/settings')->withErrors(['role_id' => 'Ce rôle ne peut pas être supprimé']);
     }
 
-    if (!isset($CONFIG_STATUS[$request->status])) {
-        return back()->withErrors(['status' => 'Statut invalide']);
-    }
+    $role->permissions()->detach();
+    $role->delete();
 
-    $facture->update([
-        'client_name' => $request->client_name,
-        'products' => $request->products,
-        'total_amount' => $total_amount,
-        'status' => $request->status,
-        'due_date' => $request->due_date,
-    ]);
+    User::where('usergroup', $role->id)->update(['usergroup' => "user"]);
 
-    return back()->with('success', 'Facture modifiée avec succès');
-});
-
-Route::delete("/factures/{id}", function ($id) {
-    $user = Auth::user();
-    if (!$user) {
-        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
-    }
-
-    if (!$user->hasPermission('view_factures') or !$user->hasPermission('delete_facture')) {
-        return redirect('/')->with("error", [
-            "title" => "Accès refusé",
-            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
-        ]);
-    }
-
-    $facture = Facture::find($id);
-    if (!$facture) {
-        return back()->withErrors(['error' => 'Facture non trouvée']);
-    }
-
-    $facture->delete();
-    return back()->with('success', 'Facture supprimée avec succès');
-});
-
-Route::get("/factures-download/{id}", function ($id) {
-    $user = Auth::user();
-    if (!$user) {
-        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
-    }
-
-    if (!$user->hasPermission('view_factures') or !$user->hasPermission('download_facture')) {
-        return redirect('/')->with("error", [
-            "title" => "Accès refusé",
-            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
-        ]);
-    }
-
-    $facture = Facture::find($id);
-    if (!$facture) {
-        return back()->withErrors(['error' => 'Facture non trouvée']);
-    }
-
-    return generatePDF($facture);
-});
-
-// TODO: Add HasPermissions
-$CONFIG_STATUS_ITEMS = [
-    "En stock",
-    "Bientôt épuisé",
-    "Rupture de stock"
-];
-
-Route::get("/storage", function () use ($CONFIG_STATUS_ITEMS) {
-    $user = Auth::user();
-    if (!$user) {
-        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
-    }
-
-    if (!$user->hasPermission('view_storage')) {
-        return redirect('/')->with("error", [
-            "title" => "Accès refusé",
-            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
-        ]);
-    }
-
-    $inventoryItems = Inventory::all();
-    $permissions = getPermission_navbar($user);
-    return view("storage", compact("inventoryItems", "CONFIG_STATUS_ITEMS", "user", "permissions"));
-});
-
-Route::post("/inventory-add", function (Request $request) use ($CONFIG_STATUS_ITEMS) {
-    $user = Auth::user();
-    if (!$user) {
-        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour ajouter un item']);
-    }
-
-    if (!$user->hasPermission('view_storage') or !$user->hasPermission('create_storage')) {
-        return redirect('/')->with("error", [
-            "title" => "Accès refusé",
-            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
-        ]);
-    }
-
-    $request->validate([
-        'product_name' => 'required|string|max:255',
-        'quantity' => 'required|integer|min:0',
-    ]);
-
-    if (!in_array($request->status, $CONFIG_STATUS_ITEMS)) {
-        return back()->withErrors(['status' => 'Status invalide']);
-    }
-
-    Inventory::create([
-        'product_name' => $request->product_name,
-        'quantity' => $request->quantity,
-        'status' => $request->status,
-    ]);
-
-    return back()->with('success', 'Item ajouté avec succès');
-});
-
-Route::delete("/inventory/{id}", function ($id) {
-    $user = Auth::user();
-    if (!$user) {
-        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour supprimer un item']);
-    }
-
-    if (!$user->hasPermission('view_storage') or !$user->hasPermission('delete_storage')) {
-        return redirect('/')->with("error", [
-            "title" => "Accès refusé",
-            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
-        ]);
-    }
-
-    $item = Inventory::find($id);
-    if (!$item) {
-        return back()->withErrors(['error' => 'Item non trouvé']);
-    }
-
-    $item->delete();
-    return back()->with('success', 'Item supprimé avec succès');
-});
-
-Route::post("/inventory/{id}", function (Request $request, $id) use ($CONFIG_STATUS_ITEMS) {
-    $user = Auth::user();
-    if (!$user) {
-        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour modifier un item']);
-    }
-
-    if (!$user->hasPermission('view_storage') or !$user->hasPermission('edit_storage')) {
-        return redirect('/')->with("error", [
-            "title" => "Accès refusé",
-            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
-        ]);
-    }
-
-    $item = Inventory::find($id);
-    if (!$item) {
-        return back()->withErrors(['error' => 'Item non trouvé']);
-    }
-
-    $request->validate([
-        'product_name' => 'required|string|max:255',
-        'quantity' => 'required|integer|min:0',
-    ]);
-
-    if (!in_array($request->status, $CONFIG_STATUS_ITEMS)) {
-        return back()->withErrors(['status' => 'Status invalide']);
-    }
-
-    $item->update([
-        'product_name' => $request->product_name,
-        'quantity' => $request->quantity,
-        'status' => $request->status,
-    ]);
-
-    return back()->with('success', 'Item modifié avec succès');
+    return redirect('/settings')->with('success', 'Les droits ont été supprimés avec succès.');
 });

@@ -12,6 +12,7 @@
                 <i class="fas fa-home"></i>
                 <span>Accueil</span>
             </a>
+            
         </li>
 
         @if(in_array('view_tickets', $permissions))
