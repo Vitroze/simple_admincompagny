@@ -99,6 +99,21 @@
                             <p>
                                 {{ \Carbon\Carbon::parse($ticket->date_ticket)->format('d/m/Y') }}
                             </p>
+                            @php
+                                $droit=App\Models\Droit::where('id', auth()->user()->droit_id)->first();
+                            @endphp
+                            @if($droit && $droit->name == 'admin')
+                            <form action="/ticket/{{ $ticket->id }}/statut" method="POST" style="display:inline">
+                                 @csrf
+                                <select name="statut">
+                                    <option value="ouvert" {{ $ticket->statut == 'ouvert' ? 'selected' : '' }}>Ouvert</option>
+                                    <option value="en_cours" {{ $ticket->statut == 'en_cours' ? 'selected' : '' }}>En cours</option>
+                                    <option value="ferme" {{ $ticket->statut == 'ferme' ? 'selected' : '' }}>Fermé</option>
+                                </select>
+                                <button type="submit">Modifier</button>
+                            </form>
+                             @endif           
+                            
                         </div>
 
                     </div>
@@ -266,7 +281,46 @@
                     });
                 }
             });
+            function confirmerSuppression(btn) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Confirmer la suppression ?',
+                    text: 'Ce ticket sera supprimé définitivement !',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#3c00ff',
+                    confirmButtonText: 'Supprimer',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                if (result.isConfirmed) {
+                    btn.closest('form').submit();
+                }
+                });
+            }
 
+
+            // statut modifié message
+            @if (session('statut_modifie'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Inscription réussie !',
+                    text: '{{ session('statut_modifie') }}',
+                    confirmButtonColor: '#3c00ff',
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            @endif
+            // ticket supprimé message
+            @if (session('ticket_supprimr'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Inscription réussie !',
+                    text: '{{ session('ticket_supprimr') }}',
+                    confirmButtonColor: '#3c00ff',
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            @endif
     </script>
 </body>
 </html>

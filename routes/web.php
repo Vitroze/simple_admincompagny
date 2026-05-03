@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 //use PHPUnit\Framework\Attributes\Ticket;
 use App\Models\Ticket;
 use App\Models\dialogue;
+use App\Models\droit;
 use App\Models\Dialogue as ModelsDialogue;
 
 Route::get('/', function () {
@@ -131,4 +132,31 @@ Route::get('/ticket_dialogue/{id}',function($id){
     return view('ticket_dialogue',compact("ticket","dialogues"));
 });
 
+Route::post('/ticket/{id}/statut', function(Request $request, $id) {
+    $user  = Auth::user();
+    $droit = Droit::where('user_id', $user->id)->first();
 
+    // Vérifie si admin
+    if (!$droit || !$droit->gerer_user) {
+        return redirect('/ticket')->with('error', 'Accès refusé !');
+    }
+
+    Ticket::where('id', $id)->update([
+        'statut' => $request->statut
+    ]);
+
+    return redirect('/ticket')->with('statut_modifie', 'Statut modifié !');
+});
+Route::post('/ticket/{id}/supprimer', function(Request $request, $id) {
+    $user  = Auth::user();
+    $droit = Droit::where('user_id', $user->id)->first();
+
+    // Vérifie si admin
+    if (!$droit || !$droit->gerer_user) {
+        return redirect('/ticket')->with('error', 'Accès refusé !');
+    }
+
+    Ticket::where('id', $id)->delete();
+
+    return redirect('/ticket')->with('ticket_supprimr', 'Ticket supprimé !');
+});
