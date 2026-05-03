@@ -94,26 +94,23 @@
                         <a href="/ticket_dialogue/{{$ticket->id}}">Voir plus</a>
                         <div class="date_statut">
                             <p >
-                            {{$ticket->statut}}
+                            {{$statusTicket[$ticket->statut]}}
                             </p>
                             <p>
                                 {{ \Carbon\Carbon::parse($ticket->date_ticket)->format('d/m/Y') }}
                             </p>
-                            @php
-                                $droit=App\Models\Droit::where('id', auth()->user()->droit_id)->first();
-                            @endphp
-                            @if($droit && $droit->name == 'admin')
+
+                            @if ($user->hasPermission('change_status_ticket'))
                             <form action="/ticket/{{ $ticket->id }}/statut" method="POST" style="display:inline">
                                  @csrf
                                 <select name="statut">
-                                    <option value="ouvert" {{ $ticket->statut == 'ouvert' ? 'selected' : '' }}>Ouvert</option>
-                                    <option value="en_cours" {{ $ticket->statut == 'en_cours' ? 'selected' : '' }}>En cours</option>
-                                    <option value="ferme" {{ $ticket->statut == 'ferme' ? 'selected' : '' }}>Fermé</option>
+                                    @foreach($statusTicket as $key => $value)
+                                        <option value="{{ $key }}" {{ $ticket->statut == $key ? 'selected' : '' }}>{{ $value }}</option>
+                                    @endforeach
                                 </select>
                                 <button type="submit">Modifier</button>
                             </form>
-                             @endif           
-                            
+                             @endif
                         </div>
 
                     </div>
