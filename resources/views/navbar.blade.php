@@ -1,8 +1,3 @@
-@php
-    $droit = App\Models\Droit::where('user_id', Auth::id())->first();
-@endphp
-
-
 <nav>
     <ul class="users">
             <a href="/profile">

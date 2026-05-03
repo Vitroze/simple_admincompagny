@@ -5,9 +5,8 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Rank;
+use App\Models\Permission;
 use App\Models\Inventory;
-use App\Models\Role;
-use App\Models\Droit;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Facture;
 
@@ -139,9 +138,14 @@ Route::get('/settings', function () {
     $user = Auth::user();
     if (!$user) return redirect('/login');
 
-    $roles = Role::all();
-    $users = User::all();
-    return view('settings', compact('roles', 'users', 'user'));
+    if (!$user->hasPermission('view_settings')) {
+        return redirect('/')->with('error', 'Accès refusé. Vous n avez pas la permission daccéder à cette page');
+    }
+
+    $roles = Rank::all();
+    $permissions = getPermission_navbar($user);
+    $allpermissions = Permission::all();
+    return view('settings', compact('roles', 'permissions', 'allpermissions', 'user'));
 });
 
 Route::post('/settings', function (Request $request) {
@@ -162,19 +166,29 @@ Route::post('/settings/droit',function(Request $request){
         return redirect('/login');
     }
 
-    Droit::updateOrCreate(
-        ['user_id' => $request->user_id,
-         'role_id' => $request->role_id
-        ],
-        [
-            'ticket' => $request->input('ticket', 0),
-            'inventaire' => $request->input('inventaire', 0),
-            'gerer_user' => $request->input('gerer_user', 0),
-            'gerer_facture' => $request->input('gerer_facture', 0),
-            'parametre' => $request->input('parametre', 0),
-        ]
-    );
- 
+    $request->validate([
+        'role_id' => 'required|exists:ranks,id',
+        "permissions" => "required|array",
+    ]);
+
+    if (!$user->hasPermission('view_settings')) {
+        return redirect('/')->with('error', 'Accès refusé. Vous n avez pas la permission daccéder à cette page');
+    }
+
+    $role = Rank::find($request->role_id);
+    if (!$role) {
+        return redirect('/settings')->with('error', 'Rôle non trouvé');
+    }
+
+    $role->permissions()->detach();
+
+    foreach ($request->permissions as $permissionName) {
+        $permission = Permission::where('id', $permissionName)->first();
+        if ($permission) {
+            $role->permissions()->syncWithoutDetaching($permission->id);
+        }
+    }
+
     return redirect('/settings')->with('permission', 'Les permissions ont été attribuées ou modifiées avec succès.');
 });
 

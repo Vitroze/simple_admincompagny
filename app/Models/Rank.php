@@ -13,4 +13,11 @@ class Rank extends Model
     {
         return $this->belongsToMany(Permission::class, 'rank_permission', 'rank_id', 'permission_id');
     }
+
+    public function getAllPermissionsNames()
+    {
+        return $this->permissions()->pluck('name_permission')->toArray();
+    }
+
+
 }

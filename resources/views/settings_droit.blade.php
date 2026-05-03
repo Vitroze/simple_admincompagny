@@ -85,12 +85,6 @@
 <form action="/settings/droit" method="POST">
     @csrf
     <input type="hidden"name="action" value="droit">
-    <label>Nom :</label>
-    <select name="user_id" id="user_name">
-        @foreach($users as $utilisateur)
-            <option value="{{ $utilisateur->id }}">{{ $utilisateur->name }}</option>
-        @endforeach
-    </select>
     <label>Rôle :</label>
     <select name="role_id">
         @foreach($roles as $role)

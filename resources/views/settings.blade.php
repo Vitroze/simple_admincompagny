@@ -85,36 +85,24 @@
 <form action="/settings/droit" method="POST">
     @csrf
     <input type="hidden"name="action" value="droit">
-    <label>Nom :</label>
-    <select name="user_id" id="user_name">
-        @foreach($users as $utilisateur)
-            <option value="{{ $utilisateur->id }}">{{ $utilisateur->name }}</option>
-        @endforeach
-    </select>
     <label>Rôle :</label>
-    <select name="role_id">
+    <select name="role_id" id="role_id">
         @foreach($roles as $role)
-            <option value="{{$role->id }}">{{ $role->nom }}</option>
+            <option value="{{$role->id }}">{{ $role->name }}</option>
         @endforeach
     </select>
     <div class="bloc">
         <legend>Choisissez les permissions a accorder&nbsp;:</legend>
         <br>
-        <input type="checkbox" id="ticket" name="ticket" value="1" />
-        <label for="ticket">Ticket</label>
-        <input type="checkbox" id="gerer_user" name="gerer_user" value="1" />
-        <label for="gerer_user">Gerer les utilisateurs</label>
-        <input type="checkbox" id="inventaire" name="inventaire" value="1"/>
-        <label for="inventaire">Inventaire</label>
-        <input type="checkbox" id="gerer_facture" name="gerer_facture" value="1" />
-        <label for="gerer_facture">Genrer les facture devis</label>
-        <input type="checkbox" id="parametre" name="parametre" value="1" />
-        <label for="parametre">Parametre</label>
+        @foreach ($allpermissions as $permission)
+            <input type="checkbox" id="permission_{{ $permission->id }}" name_permission="{{$permission->name_permission}}" name="permissions[]" value="{{ $permission->id }}" />
+            <label for="permission_{{ $permission->id }}">{{ ucfirst(str_replace('_', ' ', $permission->name_permission)) }}</label>
+        @endforeach
         <br>
         <br>
         <button type="submit">Valider</button>
     </div>
-</form>                            
+</form>
     </div>
                 </div>
             </section>
@@ -123,16 +111,10 @@
                 <h2>Supprimer un rôle</h2>
                 <form action="settings/supprimer" method="POST">
                     @csrf
-                    <label>Nom :</label>
-                    <select name="user_id" id="user_name">
-                        @foreach($users as $utilisateur)
-                            <option value="{{ $utilisateur->id }}">{{ $utilisateur->name }}</option>
-                        @endforeach
-                    </select>
                     <label>Rôle :</label>
-                    <select name="role_id">
+                    <select name="role_id" id="role_id">
                         @foreach($roles as $role)
-                            <option value="{{$role->id }}">{{ $role->nom }}</option>
+                            <option value="{{$role->id }}">{{ $role->name }}</option>
                         @endforeach
                     </select>
                     <button type="submit">Supprimer</button>
@@ -195,70 +177,53 @@
     }
 </style>
 <script>
-      @if ($errors->any())
-                Swal.fire({
-            icon: 'error',
-            title: 'Erreur d\'inscription',
-            html: '<ul style="text-align: left; padding-left: 20px;">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>',
-            confirmButtonColor: '#3c00ff',
-            confirmButtonText: 'Corriger'
-                });
-            @endif
-
-            // Success message
-    @if (session('roles'))
+    @if (session('success'))
         Swal.fire({
             icon: 'success',
-            title: 'Inscription réussie !',
-            text: '{{ session('roles') }}',
+            title: 'Succès',
+            text: '{{ session('success') }}',
             confirmButtonColor: '#3c00ff',
             timer: 3000,
             timerProgressBar: true
         });
     @endif
+
     @if ($errors->any())
-                Swal.fire({
+        Swal.fire({
             icon: 'error',
-            title: 'Erreur d\'inscription',
+            title: 'Erreur',
             html: '<ul style="text-align: left; padding-left: 20px;">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>',
             confirmButtonColor: '#3c00ff',
             confirmButtonText: 'Corriger'
-                });
-            @endif
-
-            // Success message
-    @if (session('permission'))
-        Swal.fire({
-            icon: 'success',
-            title: 'Inscription réussie !',
-            text: '{{ session('permission') }}',
-            confirmButtonColor: '#3c00ff',
-            timer: 3000,
-            timerProgressBar: true
-        });
-    @endif
-        @if ($errors->any())
-                Swal.fire({
-            icon: 'error',
-            title: 'Erreur d\'inscription',
-            html: '<ul style="text-align: left; padding-left: 20px;">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>',
-            confirmButtonColor: '#3c00ff',
-            confirmButtonText: 'Corriger'
-                });
-            @endif
-
-            // Success message
-    @if (session('droit'))
-        Swal.fire({
-            icon: 'success',
-            title: 'Inscription réussie !',
-            text: '{{ session('droit') }}',
-            confirmButtonColor: '#3c00ff',
-            timer: 3000,
-            timerProgressBar: true
         });
     @endif
 
+    const roleID = document.getElementById('role_id');
+    const permissions = @json($permissions);
+    roleID.addEventListener('change', function() {
+        const selectedRole = this.value;
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        
+        console.log('Role sélectionné :', selectedRole);
+        console.log('Permissions disponibles :', permissions);
+        const rolePermissions = @json($roles->mapWithKeys(function($role) {
+            return [$role->id => $role->getAllPermissionsNames()];
+        }));
+
+        checkboxes.forEach(checkbox => {
+            const permissionName = checkbox.getAttribute('name_permission');
+
+            console.log('Vérification de la permission :', permissionName);
+
+            if (rolePermissions[selectedRole] && rolePermissions[selectedRole].includes(permissionName)) {
+                checkbox.checked = true;
+            } else {
+                checkbox.checked = false;
+            }
+        });
+
+        console.log(permissions[selectedRole]);
+    });
 </script>
 </body>
 </html>
