@@ -43,6 +43,17 @@ class User extends Authenticatable
         return $currentUserRank->priority <= $targetUserRank->priority;
     }
 
+    public function canTargetRole(Rank $targetRole): bool
+    {
+        $currentUserRank = Rank::where('name', $this->usergroup)->first();
+
+        if (!$currentUserRank) {
+            return false;
+        }
+
+        return $currentUserRank->priority <= $targetRole->priority;
+    }
+
     public function hasPermission($permissionName, User $targetUser = null): bool
     {
         $rank = Rank::where('name', $this->usergroup)->first();
@@ -60,6 +71,12 @@ class User extends Authenticatable
         }
 
         return true;
+    }
+
+    function getPriority()
+    {
+        $rank = Rank::where('name', $this->usergroup)->first();
+        return $rank ? $rank->priority : null;
     }
 }
 

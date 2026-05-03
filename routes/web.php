@@ -148,18 +148,32 @@ Route::get('/settings', function () {
 });
 
 Route::post('/settings', function (Request $request) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login');
+    }
+
+    if (!$user->hasPermission('view_settings') or !$user->hasPermission('create_settings')) {
+        return redirect('/')->withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
+    }
+
     $request->validate([
-        "nom" => "required|string|max:255|unique:role,nom",
+        "nom" => "required|string|max:255|unique:ranks,name",
     ]);
 
-    Role::create([
-        "nom" => $request->nom,
+    if ($request->nom === 'admin' || $request->nom === 'user') {
+        return redirect('/settings')->withErrors(['nom' => 'Les rôles admin et user existent déjà et ne peuvent pas être créés']);
+    }
+
+    Rank::create([
+        'name' => $request->nom,
+        'priority' => 1000,
     ]);
 
-    return redirect('/settings')->with('roles', 'Le rôle a été créé avec succès.');
+    return redirect('/settings')->with('success', 'Le rôle a été créé avec succès.');
 });
 
-Route::post('/settings/droit',function(Request $request){  
+Route::post('/settings/droit',function(Request $request){
     $user = Auth::user();
     if (!$user) {
         return redirect('/login');
@@ -168,15 +182,28 @@ Route::post('/settings/droit',function(Request $request){
     $request->validate([
         'role_id' => 'required|exists:ranks,id',
         "permissions" => "required|array",
+        "priority" => "required|integer|min:1|max:1000",
     ]);
 
-    if (!$user->hasPermission('view_settings')) {
-        return redirect('/')->with('error', 'Accès refusé. Vous n avez pas la permission daccéder à cette page');
+    if (!$user->hasPermission('view_settings') or !$user->hasPermission('edit_settings')) {
+        return redirect('/')-withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
     }
 
     $role = Rank::find($request->role_id);
     if (!$role) {
-        return redirect('/settings')->with('error', 'Rôle non trouvé');
+        return redirect('/settings')->withErrors(['role_id' => 'Le rôle sélectionné est invalide']);
+    }
+
+    if (!$user->canTargetRole($role)) {
+        return redirect('/settings')->withErrors(['role_id' => 'Vous ne pouvez pas cibler ce rôle']);
+    }
+
+    if ($user->getPriority() > $request->priority) {
+        return redirect('/settings')->withErrors(['priority' => 'Vous ne pouvez pas attribuer une priorité inférieure à votre propre priorité']);
+    }
+
+    if ($role->name === 'admin') {
+        return redirect('/settings')->withErrors(['role_id' => 'Les permissions du rôle admin ne peuvent pas être modifiées']);
     }
 
     $role->permissions()->detach();
@@ -188,64 +215,46 @@ Route::post('/settings/droit',function(Request $request){
         }
     }
 
-    return redirect('/settings')->with('permission', 'Les permissions ont été attribuées ou modifiées avec succès.');
-});
-
-
-Route::get('tickets', function () {
-    $user = Auth::user();
-    $droit = Droit::where('user_id', $user->id)->first();
-    if (!$droit || !$droit->ticket) {
-        return redirect('/')->with('error','Accès refusé. Vous n avez pas la permission daccéder à cette page');
+    if ($request->priority !== null) {
+        $role->priority = $request->priority;
+        $role->save();
     }
 
-    return view('tickets');
+    return redirect('/settings')->with('success', 'Les permissions ont été attribuées ou modifiées avec succès.');
 });
-Route::get('inventaire', function () {
-    $user = Auth::user();
-    $droit = Droit::where('user_id', $user->id)->first();
-    if (!$droit || !$droit->inventaire) {
-        return redirect('/')->with('error','Accès refusé. Vous n avez pas la permission daccéder à cette page');
-    }
 
-    return view('inventaire');
-});
-Route::get('gerer_user', function () {
-    $user = Auth::user();
-    $droit = Droit::where('user_id', $user->id)->first();
-    if (!$droit || !$droit->gerer_user) {
-        return redirect('/')->with('error','Accès refusé. Vous n avez pas la permission daccéder à cette page');
-    }
-
-    return view('gerer_user');
-});
-Route::get('gerer_facture', function () {
-    $user = Auth::user();
-    $droit = Droit::where('user_id', $user->id)->first();
-    if (!$droit || !$droit->gerer_facture) {
-        return redirect('/')->with('error','Accès refusé. Vous n avez pas la permission daccéder à cette page');
-    }
-    return view('gerer_facture');
-});
-Route::get('parametre', function () {
-    $user = Auth::user();
-    $droit = Droit::where('user_id', $user->id)->first ();
-    if (!$droit || !$droit->parametre) {
-        return redirect('/')->with('error','Accès refusé. Vous n avez pas la permission daccéder à cette page');
-    }
-    return view('parametre');
-});
 Route::post('settings/supprimer',function(Request $request){
+    $blacklistRanks = ['admin', 'user']; // Rôles interdits pour la suppression
     $user = Auth::user();
     if (!$user) {
         return redirect('/login');
     }
-    $utilisateur = User::where('id', $request->user_id)->first();
-    
-    Droit::where('user_id',$request->user_id)
-            ->where('role_id',$request->role_id)
-            ->delete();
 
+    if (!$user->hasPermission('view_settings') or !$user->hasPermission('delete_settings')) {
+        return redirect('/')->withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
+    }
 
-    return redirect('/settings')->with('droit', 'Les droits ont été supprimés avec succès.');
+    $request->validate([
+        'role_id' => 'required|exists:ranks,id',
+    ]);
+
+    $role = Rank::find($request->role_id);
+    if (!$role) {
+        return redirect('/settings')->withErrors(['role_id' => 'Le rôle sélectionné est invalide']);
+    }
+
+    if (!$user->canTargetRole($role)) {
+        return redirect('/settings')->withErrors(['role_id' => 'Vous ne pouvez pas supprimer ce rôle']);
+    }
+
+    if (in_array($role->name, $blacklistRanks)) {
+        return redirect('/settings')->withErrors(['role_id' => 'Ce rôle ne peut pas être supprimé']);
+    }
+
+    $role->permissions()->detach();
+    $role->delete();
+
+    User::where('usergroup', $role->id)->update(['usergroup' => "user"]);
+
+    return redirect('/settings')->with('success', 'Les droits ont été supprimés avec succès.');
 });

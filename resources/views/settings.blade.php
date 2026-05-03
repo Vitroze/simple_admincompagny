@@ -67,30 +67,35 @@
 
                 <div class="information">
                     <div class="bloc">
-                        <h1>Modifier l'utilisateur</h1>
-                       
-                        
-                        
+
 <div class="cree_role">
-    <br>                             
+    <br>
     <form action="/settings" method="POST">
         @csrf
         <input type="hidden" name="action" value="role">
         <textarea  name="nom" id="nom" placeholder="Metter le nom de votre nouveau role"></textarea>
-        <button type="submit">cree</button>
-    </form>                      
+        <button type="submit">Crée</button>
+    </form>
 
     <br>
 </div>
 <form action="/settings/droit" method="POST">
     @csrf
-    <input type="hidden"name="action" value="droit">
-    <label>Rôle :</label>
-    <select name="role_id" id="role_id">
-        @foreach($roles as $role)
-            <option value="{{$role->id }}">{{ $role->name }}</option>
-        @endforeach
-    </select>
+
+    <div>    
+        <label>Rôle :</label>
+        <select name="role_id" id="role_id">
+            @foreach($roles as $role)
+                <option value="{{$role->id }}">{{ $role->name }}</option>
+            @endforeach
+        </select>
+
+        <label>Priorité :</label>
+        <input type="number" name="priority" id="priority" min="1" max="1000" value="1000">
+    </div>
+
+    <h3>Plus la priorité est basse, plus le rôle est prioritaire (ex : un rôle avec priorité 1 pourra cibler un utilisateur avec un rôle de priorité 2, mais pas l'inverse)</h3>
+
     <div class="bloc">
         <legend>Choisissez les permissions a accorder&nbsp;:</legend>
         <br>
@@ -200,10 +205,11 @@
 
     const roleID = document.getElementById('role_id');
     const permissions = @json($permissions);
+    const priorityInput = document.getElementById('priority');
     roleID.addEventListener('change', function() {
         const selectedRole = this.value;
         const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-        
+
         console.log('Role sélectionné :', selectedRole);
         console.log('Permissions disponibles :', permissions);
         const rolePermissions = @json($roles->mapWithKeys(function($role) {
@@ -222,8 +228,12 @@
             }
         });
 
-        console.log(permissions[selectedRole]);
+        priorityInput.value = @json($roles->mapWithKeys(function($role) {
+            return [$role->id => $role->priority];
+        }))[selectedRole] || 999;
     });
+
+    roleID.dispatchEvent(new Event('change')); // Trigger change event on page load to set initial state
 </script>
 </body>
 </html>

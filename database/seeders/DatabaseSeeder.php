@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         $adminRank = Rank::create(['name' => 'admin', 'priority' => 1]);
-        $userRank = Rank::create(['name' => 'user', 'priority' => 999]);
+        $userRank = Rank::create(['name' => 'user', 'priority' => 1000]);
 
         // View Permissions
         $viewTicketsPermission = Permission::create(['name_permission' => 'view_tickets']);
@@ -46,6 +46,11 @@ class DatabaseSeeder extends Seeder
         $editStoragePermission = Permission::create(['name_permission' => 'edit_storage']);
         $deleteStoragePermission = Permission::create(['name_permission' => 'delete_storage']);
 
+        // Settings Permissions
+        $createSettingsPermission = Permission::create(['name_permission' => 'create_settings']);
+        $editSettingsPermission = Permission::create(['name_permission' => 'edit_settings']);
+        $deleteSettingsPermission = Permission::create(['name_permission' => 'delete_settings']);
+
         $adminRank->permissions()->attach([
             // View Permissions
             $viewTicketsPermission->id,
@@ -67,6 +72,10 @@ class DatabaseSeeder extends Seeder
             $createStoragePermission->id,
             $editStoragePermission->id,
             $deleteStoragePermission->id,
+            // Settings Permissions
+            $createSettingsPermission->id,
+            $editSettingsPermission->id,
+            $deleteSettingsPermission->id,
         ]);
 
         $userRank->permissions()->attach([
@@ -85,23 +94,3 @@ class DatabaseSeeder extends Seeder
         ]);
     }
 }
-
-$permissions = [
-    'admin' => [
-        'manage_users' => true,
-        'inventory' => true,
-        'settings' => true,
-    ],
-
-    'user' => [
-        'manage_users' => false,
-        'inventory' => true,
-        'settings' => true,
-    ],
-
-    'invite_temporaire' => [
-        'manage_users' => false,
-        'inventory' => true,
-        'settings' => false,
-    ],
-];
