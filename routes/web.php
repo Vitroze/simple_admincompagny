@@ -1,15 +1,56 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Rank;
+use App\Models\Permission;
+use App\Models\Inventory;
 use Illuminate\Support\Facades\Auth;
 //use PHPUnit\Framework\Attributes\Ticket;
 use App\Models\Ticket;
 use App\Models\dialogue;
 use App\Models\droit;
 use App\Models\Dialogue as ModelsDialogue;
+use App\Models\Facture;
+
+// Generate PDF
+use Barryvdh\DomPDF\Facade\Pdf;
+
+function generatePDF($facture)
+{
+    $pdf = Pdf::loadView('facture_pdf', compact('facture'));
+    $pdf->setPaper('A4', 'portrait');
+    return $pdf->download($facture->reference . '.pdf');
+}
+
+function getPermission_navbar($user)
+{
+    $permissions = [];
+
+    if ($user->hasPermission('view_tickets')) {
+        $permissions[] = 'view_tickets';
+    }
+
+    if ($user->hasPermission('manage_users')) {
+        $permissions[] = 'manage_users';
+    }
+
+    if ($user->hasPermission('view_storage')) {
+        $permissions[] = 'view_storage';
+    }
+
+    if ($user->hasPermission('view_factures')) {
+        $permissions[] = 'view_factures';
+    }
+
+    if ($user->hasPermission('view_settings')) {
+        $permissions[] = 'view_settings';
+    }
+
+    return $permissions;
+}
+
 
 Route::get('/', function () {
     $user = Auth::user();
@@ -17,14 +58,28 @@ Route::get('/', function () {
         return redirect('/login');
     }
 
-    return view('welcome');
+    $users = User::all()->count();
+    $lastUser = User::latest()->first();
+    // TODO: Récupérer les données d'activité depuis le paramètre
+    // TODO: Récupérer le nombre de ticket à traiter et traité depuis tickets
+
+    $permissions = getPermission_navbar($user);
+    return view('welcome', compact('users', 'lastUser', 'permissions'));
 });
 
 Route::get('/login', function () {
+    if (Auth::check()) {
+        return redirect('/')->withErrors(['email' => 'Vous êtes déjà connecté']);
+    }
+
     return view('login');
 });
 
 Route::post('/login', function (Request $request) {
+    if (Auth::check()) {
+        return redirect('/')->withErrors(['email' => 'Vous êtes déjà connecté']);
+    }
+
     $request->validate([
         'email' => 'required|email',
         'password' => 'required',
@@ -42,10 +97,18 @@ Route::post('/login', function (Request $request) {
 });
 
 Route::get('/register', function () {
+    if (Auth::check()) {
+        return redirect('/')->withErrors(['email' => 'Vous êtes déjà connecté']);
+    }
+
     return view('register');
 });
 
 Route::post('/register', function (Request $request) {
+    if (Auth::check()) {
+        return redirect('/')->withErrors(['email' => 'Vous êtes déjà connecté']);
+    }
+
     $request->validate([
         'name' => 'required|string|max:255',
         'email' => 'required|email|unique:users,email',
@@ -67,10 +130,140 @@ Route::post('/register', function (Request $request) {
 });
 
 Route::get('/logout', function () {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour vous déconnecter']);
+    }
+
     Auth::logout();
     return redirect('/login');
 });
 
+Route::get('/settings', function () {
+    $user = Auth::user();
+    if (!$user) return redirect('/login');
+
+    if (!$user->hasPermission('view_settings')) {
+        return redirect('/')->with('error', 'Accès refusé. Vous n avez pas la permission daccéder à cette page');
+    }
+
+    $roles = Rank::all();
+    $permissions = getPermission_navbar($user);
+    $allpermissions = Permission::all();
+    return view('settings', compact('roles', 'permissions', 'allpermissions', 'user'));
+});
+
+Route::post('/settings', function (Request $request) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login');
+    }
+
+    if (!$user->hasPermission('view_settings') or !$user->hasPermission('create_settings')) {
+        return redirect('/')->withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
+    }
+
+    $request->validate([
+        "nom" => "required|string|max:255|unique:ranks,name",
+    ]);
+
+    if ($request->nom === 'admin' || $request->nom === 'user') {
+        return redirect('/settings')->withErrors(['nom' => 'Les rôles admin et user existent déjà et ne peuvent pas être créés']);
+    }
+
+    Rank::create([
+        'name' => $request->nom,
+        'priority' => 1000,
+    ]);
+
+    return redirect('/settings')->with('success', 'Le rôle a été créé avec succès.');
+});
+
+Route::post('/settings/droit',function(Request $request){
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login');
+    }
+
+    $request->validate([
+        'role_id' => 'required|exists:ranks,id',
+        "permissions" => "required|array",
+        "priority" => "required|integer|min:1|max:1000",
+    ]);
+
+    if (!$user->hasPermission('view_settings') or !$user->hasPermission('edit_settings')) {
+        return redirect('/')-withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
+    }
+
+    $role = Rank::find($request->role_id);
+    if (!$role) {
+        return redirect('/settings')->withErrors(['role_id' => 'Le rôle sélectionné est invalide']);
+    }
+
+    if (!$user->canTargetRole($role)) {
+        return redirect('/settings')->withErrors(['role_id' => 'Vous ne pouvez pas cibler ce rôle']);
+    }
+
+    if ($user->getPriority() > $request->priority) {
+        return redirect('/settings')->withErrors(['priority' => 'Vous ne pouvez pas attribuer une priorité inférieure à votre propre priorité']);
+    }
+
+    if ($role->name === 'admin') {
+        return redirect('/settings')->withErrors(['role_id' => 'Les permissions du rôle admin ne peuvent pas être modifiées']);
+    }
+
+    $role->permissions()->detach();
+
+    foreach ($request->permissions as $permissionName) {
+        $permission = Permission::where('id', $permissionName)->first();
+        if ($permission) {
+            $role->permissions()->syncWithoutDetaching($permission->id);
+        }
+    }
+
+    if ($request->priority !== null) {
+        $role->priority = $request->priority;
+        $role->save();
+    }
+
+    return redirect('/settings')->with('success', 'Les permissions ont été attribuées ou modifiées avec succès.');
+});
+
+Route::post('settings/supprimer',function(Request $request){
+    $blacklistRanks = ['admin', 'user']; // Rôles interdits pour la suppression
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login');
+    }
+
+    if (!$user->hasPermission('view_settings') or !$user->hasPermission('delete_settings')) {
+        return redirect('/')->withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
+    }
+
+    $request->validate([
+        'role_id' => 'required|exists:ranks,id',
+    ]);
+
+    $role = Rank::find($request->role_id);
+    if (!$role) {
+        return redirect('/settings')->withErrors(['role_id' => 'Le rôle sélectionné est invalide']);
+    }
+
+    if (!$user->canTargetRole($role)) {
+        return redirect('/settings')->withErrors(['role_id' => 'Vous ne pouvez pas supprimer ce rôle']);
+    }
+
+    if (in_array($role->name, $blacklistRanks)) {
+        return redirect('/settings')->withErrors(['role_id' => 'Ce rôle ne peut pas être supprimé']);
+    }
+
+    $role->permissions()->detach();
+    $role->delete();
+
+    User::where('usergroup', $role->id)->update(['usergroup' => "user"]);
+
+    return redirect('/settings')->with('success', 'Les droits ont été supprimés avec succès.');
+});
 
 Route::get('/ticket', function () {
     $tickets=Ticket::all();

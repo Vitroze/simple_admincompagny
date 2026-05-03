@@ -1,18 +1,31 @@
+.users {
+    display: flex;
+    align-items: center;
+    background-color: var(--white);
+    padding: 20px;
+    width: 250px;
+    border-radius: 8px;
+}
+
+.users a {
+    width: 100%;
+}
+
 .navbar {
     display: flex;
     flex-direction: column;
     width: 250px;
-    height: 90vh;
+    height: 75vh;
     background-color: var(--white);
     padding: 20px;
 }
 
-.navbar li {
+.navbar li, .users li {
     list-style: none;
     margin-bottom: 20px;
 }
 
-.navbar a {
+.navbar a, .users a {
     display: flex;
     align-items: center;
     color: var(--text-dark);
@@ -23,12 +36,12 @@
     transition: var(--transition);
 }
 
-.navbar a:hover {
+.navbar a:hover, .users a:hover {
     background-color: var(--primary-dark);
     color: var(--white);
 }
 
-.navbar i {
+.navbar i, .users i {
     margin-right: 10px;
     font-size: 18px;
 }
