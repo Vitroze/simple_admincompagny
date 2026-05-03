@@ -51,6 +51,13 @@ class DatabaseSeeder extends Seeder
         $editSettingsPermission = Permission::create(['name_permission' => 'edit_settings']);
         $deleteSettingsPermission = Permission::create(['name_permission' => 'delete_settings']);
 
+        // Tickets Permissions
+        $createTicketsPermission = Permission::create(['name_permission' => 'create_tickets']);
+        $viewOtherTicket = Permission::create(['name_permission' => 'view_other_ticket']);
+        $replyTicket = Permission::create(['name_permission' => 'reply_ticket']);
+        $changeStatusTicket = Permission::create(['name_permission' => 'change_status_ticket']);
+        $deleteTicket = Permission::create(['name_permission' => 'delete_ticket']);
+
         $adminRank->permissions()->attach([
             // View Permissions
             $viewTicketsPermission->id,
@@ -76,6 +83,13 @@ class DatabaseSeeder extends Seeder
             $createSettingsPermission->id,
             $editSettingsPermission->id,
             $deleteSettingsPermission->id,
+
+            // Tickets Permissions
+            $createTicketsPermission->id,
+            $viewOtherTicket->id,
+            $replyTicket->id,
+            $changeStatusTicket->id,
+            $deleteTicket->id,
         ]);
 
         $userRank->permissions()->attach([
@@ -84,6 +98,10 @@ class DatabaseSeeder extends Seeder
             $viewStoragePermission->id,
             $viewFacturesPermission->id,
             $downloadFacturePermission->id,
+
+            // Tickets Permissions
+            $createTicketsPermission->id,
+            $replyTicket->id,
         ]);
 
         User::factory()->create([
@@ -92,5 +110,6 @@ class DatabaseSeeder extends Seeder
             'password' => '1234',
             'usergroup' => 'admin',
         ]);
+
     }
 }
