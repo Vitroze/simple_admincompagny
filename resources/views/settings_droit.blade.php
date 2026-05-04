@@ -211,7 +211,7 @@
     @if (session('permmission'))
         Swal.fire({
             icon: 'success',
-            title: 'Inscription réussie !',
+            title: 'Les permission ont ete prise en compte !',
             text: '{{ session('permission') }}',
             confirmButtonColor: '#3c00ff',
             timer: 3000,
