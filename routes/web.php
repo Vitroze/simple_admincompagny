@@ -55,10 +55,12 @@ Route::get('/', function () {
     $users = User::all()->count();
     $lastUser = User::latest()->first();
     // TODO: Récupérer les données d'activité depuis le paramètre
-    // TODO: Récupérer le nombre de ticket à traiter et traité depuis tickets
+
+    $countTicketClosing = Ticket::where('statut', 'ferme')->count();
+    $countTicketOpen = Ticket::whereIn('statut', ['ouvert', 'en_cours'])->count();
 
     $permissions = getPermission_navbar($user);
-    return view('welcome', compact('users', 'lastUser', 'permissions'));
+    return view('welcome', compact('users', 'lastUser', 'permissions', 'countTicketClosing', 'countTicketOpen'));
 });
 
 Route::get('/login', function () {
@@ -334,10 +336,11 @@ Route::post('settings/supprimer', function (Request $request) {
         return redirect('/settings')->withErrors(['role_id' => 'Ce rôle ne peut pas être supprimé']);
     }
 
+    User::where('usergroup', $role->name)->update(['usergroup' => "user"]);
+
     $role->permissions()->detach();
     $role->delete();
 
-    User::where('usergroup', $role->id)->update(['usergroup' => "user"]);
 
     return redirect('/settings')->with('success', 'Les droits ont été supprimés avec succès.');
 });
