@@ -14,6 +14,9 @@ use App\Models\dialogue;
 use App\Models\Dialogue as ModelsDialogue;
 use App\Models\Facture;
 
+//
+// Please update the project (composer update) before modifying this file to get the latest features and security patches.
+//
 
 // Generate PDF
 use Barryvdh\DomPDF\Facade\Pdf;
