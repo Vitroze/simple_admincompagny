@@ -18,13 +18,6 @@ use App\Models\Facture;
 // Generate PDF
 use Barryvdh\DomPDF\Facade\Pdf;
 
-function generatePDF($facture)
-{
-    $pdf = Pdf::loadView('facture_pdf', compact('facture'));
-    $pdf->setPaper('A4', 'portrait');
-    return $pdf->download($facture->reference . '.pdf');
-}
-
 function getPermission_navbar($user)
 {
     $permissions = [];
@@ -139,6 +132,89 @@ Route::get('/logout', function () {
     Auth::logout();
     return redirect('/login');
 });
+
+// MODULE: Users
+
+Route::get('/manage-users', function () {
+
+    $hasUser = Auth::user();
+    if (!$hasUser) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    $user = Auth::user();
+    if (!$user->hasPermission('manage_users')) {
+        return redirect('/')->with("error", [
+            "title" => "Accès refusé",
+            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+        ]);
+    }
+
+    $users = User::all();
+    $ranks = Rank::all();
+    $hasPermissionDelete = $user->hasPermission('delete_users');
+    $hasPermissionEdit = $user->hasPermission('edit_users');
+    $hasPermissionSetRank = $user->hasPermission('setrank');
+    $permissions = getPermission_navbar($user);
+    return view('manage_users', compact('users', 'ranks', 'hasPermissionDelete', 'hasPermissionEdit', 'hasPermissionSetRank', 'permissions'));
+});
+
+//bouton supprimmer
+Route::delete('/users/{id}', function ($id) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['nologin' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    $userDelete = User::findOrFail($id);
+    if ($userDelete->id === $user->id) {
+        return redirect('/manage-users')->withErrors(['error' => 'Vous ne pouvez pas supprimer votre propre compte']);
+    }
+
+    if (!$user->hasPermission('manage_users') or !$user->hasPermission('delete_users', $userDelete)) {
+        return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour supprimer cette utilisateur']);
+    }
+
+    $userDelete->delete();
+
+    return back()->with('success', 'Utilisateur supprimé avec succès');
+});
+
+Route::post('/users/{id}', function (Request $request, $id) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    $userEdit = User::findOrFail($id);
+    if (!$userEdit) {
+        return back()->withErrors(['error' => 'Utilisateur non trouvé']);
+    }
+
+    if (!$user->hasPermission('manage_users') or !$user->hasPermission('edit_users', $userEdit)) {
+        return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour modifier cette utilisateur']);
+    }
+
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'usergroup' => 'string|exists:ranks,name',
+    ]);
+
+    if ($request->usergroup and $request->usergroup != $userEdit->usergroup and !$user->hasPermission('setrank', $userEdit)) {
+        return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour changer le rang d\'un utilisateur']);
+    }
+
+    if ($user->id == $id) {
+        return back()->withErrors(['error' => 'Vous ne pouvez pas modifier votre propre compte']);
+    }
+
+    $userEdit->usergroup = $request->usergroup;
+    $userEdit->name = $request->name;
+    $userEdit->save();
+
+    return back()->with('success', 'Utilisateur modifié avec succès');
+});
+
 
 Route::get('/settings', function () {
     $user = Auth::user();
@@ -452,4 +528,268 @@ Route::post('/ticket/{id}/supprimer', function (Request $request, $id) {
     $ticket->delete();
 
     return redirect('/ticket')->with('ticket_supprimr', 'Ticket supprimé !');
+});
+
+// MODULE: Facture
+function generatePDF($facture)
+{
+    $pdf = Pdf::loadView('facture_pdf', compact('facture'));
+    $pdf->setPaper('A4', 'portrait');
+    return $pdf->download($facture->reference . '.pdf');
+}
+
+$CONFIG_STATUS = [
+    'pending' => 'En attente',
+    'paid' => 'Payée',
+    'cancelled' => 'Annulée',
+];
+
+Route::get("/factures", function () use ($CONFIG_STATUS) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    if (!$user->hasPermission('view_factures')) {
+        return redirect('/')->withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
+    }
+
+    $factures = Facture::all();
+    $permissions = getPermission_navbar($user);
+    return view('facture', compact('factures', 'CONFIG_STATUS', 'permissions', 'user'));
+});
+
+Route::post("/factures-add", function (Request $request) use ($CONFIG_STATUS) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    $request->validate([
+        'client_name' => 'required|string|max:255',
+        'products' => 'required|json',
+        'status' => 'required|in:' . implode(',', array_keys($CONFIG_STATUS)),
+        'due_date' => 'required|date',
+    ]);
+
+    $products = json_decode($request->products, true);
+    $total_amount = 0;
+
+    if ($products === null || !is_array($products)) {
+        return back()->withErrors(['products' => 'Le format des produits est invalide']);
+    }
+
+    foreach ($products as $product) {
+        $total_amount += $product['price'] * $product['quantity'];
+    }
+
+    if ($total_amount < 0) {
+        return back()->withErrors(['products' => 'Le montant total ne peut pas être négatif']);
+    }
+
+    if (!isset($CONFIG_STATUS[$request->status])) {
+        return back()->withErrors(['status' => 'Statut invalide']);
+    }
+
+    Facture::create([
+        'reference' => 'FAC-' . Str::upper(Str::random(8)),
+        'client_name' => $request->client_name,
+        'products' => $request->products,
+        'total_amount' => $total_amount,
+        'status' => $request->status,
+        'due_date' => $request->due_date,
+    ]);
+
+    return back()->with('success', 'Facture ajoutée avec succès');
+});
+
+Route::post("/factures/{id}", function (Request $request, $id) use ($CONFIG_STATUS) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    $facture = Facture::find($id);
+    if (!$facture) {
+        return back()->withErrors(['error' => 'Facture non trouvée']);
+    }
+
+    $request->validate([
+        'client_name' => 'required|string|max:255',
+        'products' => 'required|json',
+        'status' => 'required|in:' . implode(',', array_keys($CONFIG_STATUS)),
+        'due_date' => 'required|date',
+    ]);
+
+    $products = json_decode($request->products, true);
+    $total_amount = 0;
+
+    if ($products === null || !is_array($products)) {
+        return back()->withErrors(['products' => 'Le format des produits est invalide']);
+    }
+
+    foreach ($products as $product) {
+        $total_amount += $product['price'] * $product['quantity'];
+    }
+
+    if ($total_amount < 0) {
+        return back()->withErrors(['products' => 'Le montant total ne peut pas être négatif']);
+    }
+
+    if (!isset($CONFIG_STATUS[$request->status])) {
+        return back()->withErrors(['status' => 'Statut invalide']);
+    }
+
+    $facture->update([
+        'client_name' => $request->client_name,
+        'products' => $request->products,
+        'total_amount' => $total_amount,
+        'status' => $request->status,
+        'due_date' => $request->due_date,
+    ]);
+
+    return back()->with('success', 'Facture modifiée avec succès');
+});
+
+Route::delete("/factures/{id}", function ($id) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    $facture = Facture::find($id);
+    if (!$facture) {
+        return back()->withErrors(['error' => 'Facture non trouvée']);
+    }
+
+    $facture->delete();
+    return back()->with('success', 'Facture supprimée avec succès');
+});
+
+Route::get("/factures-download/{id}", function ($id) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    $facture = Facture::find($id);
+    if (!$facture) {
+        return back()->withErrors(['error' => 'Facture non trouvée']);
+    }
+
+    return generatePDF($facture);
+});
+
+// MODULE: Inventory
+$CONFIG_STATUS_ITEMS = [
+    "En stock",
+    "Bientôt épuisé",
+    "Rupture de stock"
+];
+
+Route::get("/storage", function () use ($CONFIG_STATUS_ITEMS) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    if (!$user->hasPermission('view_storage')) {
+        return redirect('/')->with("error", [
+            "title" => "Accès refusé",
+            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+        ]);
+    }
+
+    $inventoryItems = Inventory::all();
+    $permissions = getPermission_navbar($user);
+    return view("storage", compact("inventoryItems", "CONFIG_STATUS_ITEMS", "user", "permissions"));
+});
+
+Route::post("/inventory-add", function (Request $request) use ($CONFIG_STATUS_ITEMS) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour ajouter un item']);
+    }
+
+    if (!$user->hasPermission('view_storage') or !$user->hasPermission('create_storage')) {
+        return redirect('/')->with("error", [
+            "title" => "Accès refusé",
+            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+        ]);
+    }
+
+    $request->validate([
+        'product_name' => 'required|string|max:255',
+        'quantity' => 'required|integer|min:0',
+    ]);
+
+    if (!in_array($request->status, $CONFIG_STATUS_ITEMS)) {
+        return back()->withErrors(['status' => 'Status invalide']);
+    }
+
+    Inventory::create([
+        'product_name' => $request->product_name,
+        'quantity' => $request->quantity,
+        'status' => $request->status,
+    ]);
+
+    return back()->with('success', 'Item ajouté avec succès');
+});
+
+Route::delete("/inventory/{id}", function ($id) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour supprimer un item']);
+    }
+
+    if (!$user->hasPermission('view_storage') or !$user->hasPermission('delete_storage')) {
+        return redirect('/')->with("error", [
+            "title" => "Accès refusé",
+            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+        ]);
+    }
+
+    $item = Inventory::find($id);
+    if (!$item) {
+        return back()->withErrors(['error' => 'Item non trouvé']);
+    }
+
+    $item->delete();
+    return back()->with('success', 'Item supprimé avec succès');
+});
+
+Route::post("/inventory/{id}", function (Request $request, $id) use ($CONFIG_STATUS_ITEMS) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour modifier un item']);
+    }
+
+    if (!$user->hasPermission('view_storage') or !$user->hasPermission('edit_storage')) {
+        return redirect('/')->with("error", [
+            "title" => "Accès refusé",
+            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+        ]);
+    }
+
+    $item = Inventory::find($id);
+    if (!$item) {
+        return back()->withErrors(['error' => 'Item non trouvé']);
+    }
+
+    $request->validate([
+        'product_name' => 'required|string|max:255',
+        'quantity' => 'required|integer|min:0',
+    ]);
+
+    if (!in_array($request->status, $CONFIG_STATUS_ITEMS)) {
+        return back()->withErrors(['status' => 'Status invalide']);
+    }
+
+    $item->update([
+        'product_name' => $request->product_name,
+        'quantity' => $request->quantity,
+        'status' => $request->status,
+    ]);
+
+    return back()->with('success', 'Item modifié avec succès');
 });
