@@ -118,8 +118,8 @@
                     </div>
                     <div class="bloc">
                         <h3>Activité</h3>
-                        <p>Ticket traité : 5</p>
-                        <p>Ticket à traité : 3</p>
+                        <p>Ticket traité : {{ $countTicketClosing }}</p>
+                        <p>Ticket à traité : {{ $countTicketOpen }}</p>
                         <p>Nombre d'utilisateurs : {{ $users }}</p>
                     </div>
                     <div class="bloc">
