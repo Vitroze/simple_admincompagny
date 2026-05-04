@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -12,6 +13,7 @@ use App\Models\Ticket;
 use App\Models\dialogue;
 use App\Models\Dialogue as ModelsDialogue;
 use App\Models\Facture;
+
 
 // Generate PDF
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -178,7 +180,7 @@ Route::post('/settings', function (Request $request) {
     return redirect('/settings')->with('success', 'Le rôle a été créé avec succès.');
 });
 
-Route::post('/settings/droit',function(Request $request){
+Route::post('/settings/droit', function (Request $request) {
     $user = Auth::user();
     if (!$user) {
         return redirect('/login');
@@ -191,7 +193,7 @@ Route::post('/settings/droit',function(Request $request){
     ]);
 
     if (!$user->hasPermission('view_settings') or !$user->hasPermission('edit_settings')) {
-        return redirect('/')-withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
+        return redirect('/') - withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
     }
 
     $role = Rank::find($request->role_id);
@@ -228,7 +230,7 @@ Route::post('/settings/droit',function(Request $request){
     return redirect('/settings')->with('success', 'Les permissions ont été attribuées ou modifiées avec succès.');
 });
 
-Route::post('settings/supprimer',function(Request $request){
+Route::post('settings/supprimer', function (Request $request) {
     $blacklistRanks = ['admin', 'user']; // Rôles interdits pour la suppression
     $user = Auth::user();
     if (!$user) {
@@ -295,10 +297,10 @@ Route::get('/ticket', function () use ($statusTicket) {
     return view('ticket', compact("user", "tickets", "permissions", "statusTicket"));
 });
 
-Route::post('/tickets',function(Request $request){
+Route::post('/tickets', function (Request $request) {
     $user = Auth::user();
     if (!$user) {
-        return redirect('/login')-withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+        return redirect('/login') - withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
     }
 
     if (!$user->hasPermission('create_tickets')) {
@@ -306,16 +308,16 @@ Route::post('/tickets',function(Request $request){
     }
 
     $request->validate([
-            "description"=>"required|string",
-            "date_tiket"=>"required", 
-        ]);
-    
+        "description" => "required|string",
+        "date_tiket" => "required",
+    ]);
+
     Ticket::create([
-        "description"=>$request->description,
-        "statut"=>"ouvert",
-        "date_tiket"=>$request->date_tiket,
-        "user_id"=>$user->id
-        ]);
+        "description" => $request->description,
+        "statut" => "ouvert",
+        "date_tiket" => $request->date_tiket,
+        "user_id" => $user->id
+    ]);
 
 
 
@@ -325,14 +327,14 @@ Route::post('/tickets',function(Request $request){
 Route::get('/ticket_dialogue', function () {
     $user = Auth::user();
     if (!$user) {
-        return redirect('/login')-withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+        return redirect('/login') - withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
     }
 
     if (!$user->hasPermission('view_tickets')) {
         return redirect('/')->withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
     }
 
-    $dialogue=Dialogue::all();
+    $dialogue = Dialogue::all();
 
     if ($dialogue->user_id != $user->id and !$user->hasPermission('view_other_ticket')) {
         return redirect('/ticket')->withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
@@ -343,11 +345,11 @@ Route::get('/ticket_dialogue', function () {
     return view('ticket_dialogue', compact("dialogue", "permissions"));
 });
 
-Route::post('/ticket_dialogue',function(Request $request){  
+Route::post('/ticket_dialogue', function (Request $request) {
 
     $user = Auth::user();
     if (!$user) {
-        return redirect('/login')-withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+        return redirect('/login') - withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
     }
 
     if (!$user->hasPermission('view_tickets')) {
@@ -355,8 +357,8 @@ Route::post('/ticket_dialogue',function(Request $request){
     }
 
     $request->validate([
-        "reponse"=>"required|string|max:200",
-        "ticket_id"=>"required|exists:tickets,id",
+        "reponse" => "required|string|max:200",
+        "ticket_id" => "required|exists:tickets,id",
     ]);
 
     $ticket = Ticket::find($request->ticket_id);
@@ -377,46 +379,46 @@ Route::post('/ticket_dialogue',function(Request $request){
     }
 
     Dialogue::create([
-        "reponse"=>$request->reponse,
-        "user_id"=>$user->id,
-        "ticket_id"=>$request->ticket_id,
-        "user_name"=>$user->name,
-        ]);
+        "reponse" => $request->reponse,
+        "user_id" => $user->id,
+        "ticket_id" => $request->ticket_id,
+        "user_name" => $user->name,
+    ]);
 
 
 
     return redirect('/ticket_dialogue/' . $request->ticket_id)->with('reponse', 'Votre message a bien ete envoye. Vous pouvez maintenant le consulte  les commentaire du ticket.');
 });
-Route::get('/ticket_dialogue/{id}',function($id){
+Route::get('/ticket_dialogue/{id}', function ($id) {
     $user = Auth::user();
     if (!$user) {
-        return redirect('/login')-withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+        return redirect('/login') - withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
     }
 
     if (!$user->hasPermission('view_tickets')) {
         return redirect('/')->withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
     }
 
-    $ticket=Ticket::find($id);
+    $ticket = Ticket::find($id);
     if (!$ticket or ($ticket->user_id != $user->id and !$user->hasPermission('view_other_ticket'))) {
         return redirect('/ticket')->withErrors(['email' => 'Ticket non trouvé']);
     }
 
-    $dialogues=Dialogue::where('ticket_id',$id)->get();
+    $dialogues = Dialogue::where('ticket_id', $id)->get();
     $permissions = getPermission_navbar($user);
-    return view('ticket_dialogue',compact("ticket","dialogues","permissions"));
+    return view('ticket_dialogue', compact("ticket", "dialogues", "permissions"));
 });
 
-Route::post('/ticket/{id}/statut', function(Request $request, $id) use ($statusTicket) {
+Route::post('/ticket/{id}/statut', function (Request $request, $id) use ($statusTicket) {
     $user  = Auth::user();
     if (!$user) {
         return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
     }
-    
+
     if (!$user->hasPermission('change_status_ticket')) {
         return redirect('/ticket')->withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
     }
-    
+
 
     $request->validate([
         'statut' => 'required|in:' . implode(',', array_keys($statusTicket))
@@ -432,7 +434,7 @@ Route::post('/ticket/{id}/statut', function(Request $request, $id) use ($statusT
 
     return redirect('/ticket')->with('statut_modifie', 'Statut modifié !');
 });
-Route::post('/ticket/{id}/supprimer', function(Request $request, $id) {
+Route::post('/ticket/{id}/supprimer', function (Request $request, $id) {
     $user  = Auth::user();
     if (!$user) {
         return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
