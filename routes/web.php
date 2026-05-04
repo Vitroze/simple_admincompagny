@@ -345,7 +345,7 @@ Route::post('settings/supprimer', function (Request $request) {
     $role->delete();
 
 
-    return redirect('/settings')->with('success', 'Les droits ont été supprimés avec succès.');
+    return redirect('/settings')->with('success', 'Le rôle a été supprimé avec succès.');
 });
 
 function getAllTicket($user)
