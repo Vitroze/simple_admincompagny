@@ -269,7 +269,7 @@ Route::post('/settings/droit', function (Request $request) {
     ]);
 
     if (!$user->hasPermission('view_settings') or !$user->hasPermission('edit_settings')) {
-        return redirect('/') - withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
+        return redirect('/')->withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
     }
 
     $role = Rank::find($request->role_id);
@@ -376,7 +376,7 @@ Route::get('/ticket', function () use ($statusTicket) {
 Route::post('/tickets', function (Request $request) {
     $user = Auth::user();
     if (!$user) {
-        return redirect('/login') - withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
     }
 
     if (!$user->hasPermission('create_tickets')) {
@@ -403,7 +403,7 @@ Route::post('/tickets', function (Request $request) {
 Route::get('/ticket_dialogue', function () {
     $user = Auth::user();
     if (!$user) {
-        return redirect('/login') - withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
     }
 
     if (!$user->hasPermission('view_tickets')) {
@@ -425,7 +425,7 @@ Route::post('/ticket_dialogue', function (Request $request) {
 
     $user = Auth::user();
     if (!$user) {
-        return redirect('/login') - withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
     }
 
     if (!$user->hasPermission('view_tickets')) {
@@ -468,7 +468,7 @@ Route::post('/ticket_dialogue', function (Request $request) {
 Route::get('/ticket_dialogue/{id}', function ($id) {
     $user = Auth::user();
     if (!$user) {
-        return redirect('/login') - withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
     }
 
     if (!$user->hasPermission('view_tickets')) {
