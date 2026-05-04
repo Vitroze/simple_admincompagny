@@ -133,6 +133,89 @@ Route::get('/logout', function () {
     return redirect('/login');
 });
 
+// MODULE: Users
+
+Route::get('/manage-users', function () {
+
+    $hasUser = Auth::user();
+    if (!$hasUser) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    $user = Auth::user();
+    if (!$user->hasPermission('manage_users')) {
+        return redirect('/')->with("error", [
+            "title" => "Accès refusé",
+            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+        ]);
+    }
+
+    $users = User::all();
+    $ranks = Rank::all();
+    $hasPermissionDelete = $user->hasPermission('delete_users');
+    $hasPermissionEdit = $user->hasPermission('edit_users');
+    $hasPermissionSetRank = $user->hasPermission('setrank');
+    $permissions = getPermission_navbar($user);
+    return view('manage_users', compact('users', 'ranks', 'hasPermissionDelete', 'hasPermissionEdit', 'hasPermissionSetRank', 'permissions'));
+});
+
+//bouton supprimmer
+Route::delete('/users/{id}', function ($id) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['nologin' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    $userDelete = User::findOrFail($id);
+    if ($userDelete->id === $user->id) {
+        return redirect('/manage-users')->withErrors(['error' => 'Vous ne pouvez pas supprimer votre propre compte']);
+    }
+
+    if (!$user->hasPermission('manage_users') or !$user->hasPermission('delete_users', $userDelete)) {
+        return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour supprimer cette utilisateur']);
+    }
+
+    $userDelete->delete();
+
+    return back()->with('success', 'Utilisateur supprimé avec succès');
+});
+
+Route::post('/users/{id}', function (Request $request, $id) {
+    $user = Auth::user();
+    if (!$user) {
+        return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
+    }
+
+    $userEdit = User::findOrFail($id);
+    if (!$userEdit) {
+        return back()->withErrors(['error' => 'Utilisateur non trouvé']);
+    }
+
+    if (!$user->hasPermission('manage_users') or !$user->hasPermission('edit_users', $userEdit)) {
+        return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour modifier cette utilisateur']);
+    }
+
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'usergroup' => 'string|exists:ranks,name',
+    ]);
+
+    if ($request->usergroup and $request->usergroup != $userEdit->usergroup and !$user->hasPermission('setrank', $userEdit)) {
+        return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour changer le rang d\'un utilisateur']);
+    }
+
+    if ($user->id == $id) {
+        return back()->withErrors(['error' => 'Vous ne pouvez pas modifier votre propre compte']);
+    }
+
+    $userEdit->usergroup = $request->usergroup;
+    $userEdit->name = $request->name;
+    $userEdit->save();
+
+    return back()->with('success', 'Utilisateur modifié avec succès');
+});
+
+
 Route::get('/settings', function () {
     $user = Auth::user();
     if (!$user) return redirect('/login');
