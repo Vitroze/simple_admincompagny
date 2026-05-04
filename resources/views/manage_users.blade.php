@@ -214,6 +214,20 @@
     </style>
 </head>
 <body>
+/*entrainement avec copilot*/
+@php
+    $labels = ['admin' => 'administrateur'];
+@endphp
+
+{{ $labels['admin'] }}
+
+@php
+    $couleur_rank = [
+        'admin' => 'red',
+        'user' => 'blue'
+    ];
+@endphp
+
 
     <div class="container-navbar">
         @include("navbar")
@@ -232,7 +246,11 @@
                             <th>ID</th>
                             <th>Nom d'utilisateur</th>
                             <th>Email</th>
+                            <th>Date de création</th>
+                            <th>Date de création Modifier</th>
                             <th>Rôle</th>
+                            <th>Rôle traduis</th>
+
 
                             @if ($hasPermissionEdit || $hasPermissionDelete)
                                 <th>Actions</th>
@@ -246,7 +264,14 @@
                             <td>{{ $user->id }}</td>
                             <td>{{ $user->name }}</td>
                             <td>{{ $user->email }}</td>
+                            <td>{{ $user->created_at }}</td>
+                            <td>{{ date('d/m/y', strtotime($user->created_at ))}}</td>
                             <td>{{ $user->usergroup }}</td>
+                            <td style="color: {{  $couleur_rank[$user->usergroup] }};">
+                                {{ $user->usergroup }}
+                            </td>
+                            <td>{{ $labels[$user->usergroup] ?? $user->usergroup }}</td>
+
 
                             @if ($hasPermissionEdit || $hasPermissionDelete)
                                 <td>
