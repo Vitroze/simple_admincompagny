@@ -353,14 +353,18 @@
         let due_date = document.getElementById('due_date');
         let button_add = document.querySelector('.add-item');
 
-        document.querySelector(".add-popup").addEventListener('click', () => {
-            popup.style.display = 'flex';
-            button_add.textContent = 'Ajouter';
-            popup.querySelector('form').action = '/factures-add';
+        function ResetPopup() {
             client_name.value = '';
             status.value = 'pending';
             due_date.value = '';
             document.getElementById('additional-products').innerHTML = '';
+        }
+
+        document.querySelector(".add-popup").addEventListener('click', () => {
+            popup.style.display = 'flex';
+            button_add.textContent = 'Ajouter';
+            popup.querySelector('form').action = '/factures-add';
+            ResetPopup();
         });
 
         button_add.addEventListener('click', (e) => {
@@ -439,7 +443,6 @@
                         cancelButtonText: 'Annuler'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            console.log(`Suppression de l'item avec ID: ${button.id.split('-')[1]}`);
                             document.getElementById(`${button.id.split('-')[1]}`).submit();
                         }
                     });
@@ -468,12 +471,12 @@
 
         document.querySelectorAll('.modify-items').forEach(button => {
             button.addEventListener('click', () => {
+                ResetPopup();
                 popup.style.display = 'flex';
                 client_name.value = button.parentElement.parentElement.children[3].textContent;
                 status.value = button.parentElement.parentElement.children[4].textContent.trim().toLowerCase();
                 due_date.value = button.parentElement.parentElement.children[6].textContent.split('/').reverse().join('-');
                 let products = JSON.parse(button.parentElement.parentElement.children[1].textContent.replace(/€/g, '').trim());
-                console.log(status.value);
 
                 for (let i = 0; i < products.length; i++) {
                     let product = products[i];

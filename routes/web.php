@@ -550,16 +550,13 @@ Route::get("/factures", function () use ($CONFIG_STATUS) {
         return redirect('/login')->withErrors(['email' => 'Vous devez être connecté pour accéder à cette page']);
     }
 
-    if (!$user->hasPermission('view_facture')) {
-        return redirect('/')->with("error", [
-            "title" => "Accès refusé",
-            "message" => "Vous n'avez pas les permissions nécessaires pour accéder à cette page."
-        ]);
+    if (!$user->hasPermission('view_factures')) {
+        return redirect('/')->withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
     }
 
     $factures = Facture::all();
     $permissions = getPermission_navbar($user);
-    return view('facture', compact('factures', 'CONFIG_STATUS', 'permissions'));
+    return view('facture', compact('factures', 'CONFIG_STATUS', 'permissions', 'user'));
 });
 
 Route::post("/factures-add", function (Request $request) use ($CONFIG_STATUS) {
