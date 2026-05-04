@@ -26,12 +26,5 @@ class AppServiceProvider extends ServiceProvider
         if (User::count() === 0 and Rank::count() === 0 and Permission::count() === 0) {
             Artisan::call('db:seed');
         }
-
-        // Install automatic if not installed (Barryvdh\DomPDF\Facade\Pdf)
-        if (!class_exists('Barryvdh\DomPDF\Facade\Pdf')) {
-            Artisan::call('vendor:publish', [
-                '--provider' => 'Barryvdh\DomPDF\ServiceProvider',
-            ]);
-        }
     }
 }
