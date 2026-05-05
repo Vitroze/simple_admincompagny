@@ -175,7 +175,7 @@ Route::delete('/users/{id}', function ($id) {
 
     return back()->with('success', 'Utilisateur supprimé avec succès');
 });
-
+//
 Route::post('/users/{id}', function (Request $request, $id) {
     $user = Auth::user();
     if (!$user) {
