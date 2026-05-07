@@ -180,6 +180,9 @@ Route::delete('/users/{id}', function ($id) {
         return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour supprimer cette utilisateur']);
     }
 
+    Dialogue::where('user_id', $userDelete->id)->delete();
+    Ticket::where('user_id', $userDelete->id)->delete();
+
     $userDelete->delete();
 
     return back()->with('success', 'Utilisateur supprimé avec succès');
@@ -417,6 +420,10 @@ Route::get('/ticket_dialogue', function () {
     }
 
     $dialogue = Dialogue::all();
+
+    if (!$dialogue || !$dialogue->user_id) {
+        return redirect('/ticket')->withErrors(['email' => 'Dialogue non trouvé']);
+    }
 
     if ($dialogue->user_id != $user->id and !$user->hasPermission('view_other_ticket')) {
         return redirect('/ticket')->withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
