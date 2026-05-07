@@ -256,7 +256,8 @@
                             <th>Facture</th>
                             <th>Client</th>
                             <th>Status</th>
-                            <th>Montant total</th>
+                            <th>Montant (HT)</th>
+                            <th>Montant (TTC)</th>
                             <th>Date d'échéance</th>
                             <th>Dernière modification</th>
 
@@ -281,6 +282,7 @@
                                     </span>
                                 </td>
                                 <td>{{ number_format($facture->total_amount, 2) }} €</td>
+                                <td>{{ number_format($facture->total_amount * 1.2, 2) }} €</td>
                                 <td>{{ \Carbon\Carbon::parse($facture->due_date)->format('d/m/Y') }}</td>
                                 <td>{{ \Carbon\Carbon::parse($facture->updated_at)->format('d/m/Y H:i') }}</td>
                                 @if ($user->hasPermission('edit_facture') or $user->hasPermission('delete_facture') or $user->hasPermission('download_facture'))

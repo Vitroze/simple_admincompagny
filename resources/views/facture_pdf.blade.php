@@ -402,8 +402,12 @@
                             <span class="summary-value">{{ number_format((float) $facture->total_amount, 2, ',', ' ') }} €</span>
                         </div>
                         <div class="summary-row summary-total">
+                            <span class="summary-label">TVA (20%)</span>
+                            <span class="summary-value">{{ number_format($facture->total_amount * 0.2, 2, ',', ' ') }} €</span>
+                        </div>
+                        <div class="summary-row summary-total">
                             <span class="summary-label">Solde dû</span>
-                            <span class="summary-value">{{ number_format((float) $facture->total_amount, 2, ',', ' ') }} €</span>
+                            <span class="summary-value">{{ number_format((float) $facture->total_amount * 1.2, 2, ',', ' ') }} €</span>
                         </div>
                     </div>
                 </td>
