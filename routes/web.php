@@ -421,6 +421,10 @@ Route::get('/ticket_dialogue', function () {
 
     $dialogue = Dialogue::all();
 
+    if (!$dialogue || !$dialogue->user_id) {
+        return redirect('/ticket')->withErrors(['email' => 'Dialogue non trouvé']);
+    }
+
     if ($dialogue->user_id != $user->id and !$user->hasPermission('view_other_ticket')) {
         return redirect('/ticket')->withErrors(['email' => 'Accès refusé. Vous n avez pas la permission daccéder à cette page']);
     }
