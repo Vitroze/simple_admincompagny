@@ -180,6 +180,9 @@ Route::delete('/users/{id}', function ($id) {
         return back()->withErrors(['error' => 'Vous n\'avez pas les permissions nécessaires pour supprimer cette utilisateur']);
     }
 
+    Dialogue::where('user_id', $userDelete->id)->delete();
+    Ticket::where('user_id', $userDelete->id)->delete();
+
     $userDelete->delete();
 
     return back()->with('success', 'Utilisateur supprimé avec succès');
